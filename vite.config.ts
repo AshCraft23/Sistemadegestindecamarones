@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {
@@ -49,25 +50,32 @@ export default defineConfig({
     },
   },
 
-  /** 🚀 CONFIG ESENCIAL PARA RAILWAY */
+  /** 🚀 FIXES PARA RAILWAY + SUPABASE */
+  server: {
+    port: 3000,
+    host: true,
+    open: false, // ❌ evita xdg-open ENOENT en Railway
+  },
+
   preview: {
     host: true,
-    port: process.env.PORT, // Usa el puerto dinámico de Railway
+    port: 8080, // Railway asigna el puerto mediante variable interna
     allowedHosts: [
-      // Permite tu dominio Railway
       "sistemadegestindecamarones-production-d8d5.up.railway.app",
-      // Permite cualquier otro dominio generado por Railway
-      ".railway.app"
-    ]
+      ".railway.app",
+      "*"
+    ],
+  },
+
+  optimizeDeps: {
+    include: ["@supabase/supabase-js"], // ⚡ asegura que supabase se incluya en el bundle
   },
 
   build: {
     target: 'esnext',
     outDir: 'build',
-  },
-
-  server: {
-    port: 3000,
-    open: true,
-  },
+    rollupOptions: {
+      external: [],   // ⚡ evita el error de Rollup al resolver supabase
+    }
+  }
 });
