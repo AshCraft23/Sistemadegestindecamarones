@@ -3,25 +3,72 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
-import { Proveedor } from '../App';
+import { supabase } from '@/lib/supabase';
 
 interface ProveedorFormProps {
-  initialData?: Proveedor;
-  onSubmit: (data: Omit<Proveedor, 'id'>) => void;
+  initialData?: any;
+  onSubmit?: () => void;
 }
 
 export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: initialData?.nombre || '',
     contacto: initialData?.contacto || '',
     telefono: initialData?.telefono || '',
     email: initialData?.email || '',
-    activo: initialData?.activo ?? true
+    activo: initialData?.activo ?? true,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setLoading(true);
+
+    try {
+      let response;
+
+      // Si estamos editando un proveedor existente
+      if (initialData?.id) {
+        response = await supabase
+          .from('proveedores')
+          .update({
+            nombre: formData.nombre,
+            ubicacion: formData.contacto,  // 👈 contacto se guarda en ubicacion
+            telefono: formData.telefono,
+            email: formData.email,
+            activo: formData.activo,
+          })
+          .eq('id', initialData.id);
+      } 
+      // Si estamos creando un nuevo proveedor
+      else {
+        response = await supabase
+          .from('proveedores')
+          .insert([
+            {
+              nombre: formData.nombre,
+              ubicacion: formData.contacto, // 👈 contacto → ubicacion
+              telefono: formData.telefono,
+              email: formData.email,
+              activo: formData.activo,
+            }
+          ]);
+      }
+
+      const { error } = response;
+
+      if (error) {
+        console.error("Error al guardar proveedor:", error);
+        alert("Error: " + error.message);
+        return;
+      }
+
+      alert("Proveedor guardado correctamente.");
+      onSubmit?.();
+
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,15 +124,22 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
         <Switch
           id="activo"
           checked={formData.activo}
-          onCheckedChange={(checked) => setFormData({ ...formData, activo: checked })}
+          onCheckedChange={(checked) =>
+            setFormData({ ...formData, activo: checked })
+          }
         />
       </div>
 
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700"
+        disabled={loading}
       >
-        {initialData ? 'Actualizar Proveedor' : 'Crear Proveedor'}
+        {loading
+          ? "Guardando..."
+          : initialData
+          ? "Actualizar Proveedor"
+          : "Crear Proveedor"}
       </Button>
     </form>
   );
