@@ -9,15 +9,47 @@ import {
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Pencil, Trash2 } from 'lucide-react';
-import { Proveedor } from '../App';
+import { supabase } from '@/lib/supabase';
+
+export interface Proveedor {
+  id: string;
+  nombre: string;
+  contacto: string;
+  telefono: string;
+  email: string;
+  activo: boolean;
+}
 
 interface ProveedorTableProps {
   proveedores: Proveedor[];
   onEdit: (proveedor: Proveedor) => void;
-  onDelete: (id: string) => void;
+  onRefresh: () => void; // 🔁 recargar lista después de eliminar
 }
 
-export function ProveedorTable({ proveedores, onEdit, onDelete }: ProveedorTableProps) {
+export function ProveedorTable({
+  proveedores,
+  onEdit,
+  onRefresh,
+}: ProveedorTableProps) {
+  const handleDelete = async (id: string, nombre: string) => {
+    const ok = confirm(`¿Está seguro de eliminar a ${nombre}?`);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from('proveedores')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al eliminar proveedor:', error);
+      alert('Error: ' + error.message);
+      return;
+    }
+
+    alert('Proveedor eliminado correctamente.');
+    onRefresh();
+  };
+
   if (proveedores.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -49,10 +81,13 @@ export function ProveedorTable({ proveedores, onEdit, onDelete }: ProveedorTable
               <TableCell>{proveedor.telefono}</TableCell>
               <TableCell>{proveedor.email}</TableCell>
               <TableCell>
-                <Badge className={proveedor.activo 
-                  ? 'bg-green-100 text-green-800 border-green-200' 
-                  : 'bg-gray-100 text-gray-800 border-gray-200'
-                }>
+                <Badge
+                  className={
+                    proveedor.activo
+                      ? 'bg-green-100 text-green-800 border-green-200'
+                      : 'bg-gray-100 text-gray-800 border-gray-200'
+                  }
+                >
                   {proveedor.activo ? 'Activo' : 'Inactivo'}
                 </Badge>
               </TableCell>
@@ -68,11 +103,9 @@ export function ProveedorTable({ proveedores, onEdit, onDelete }: ProveedorTable
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (confirm(`¿Está seguro de eliminar a ${proveedor.nombre}?`)) {
-                        onDelete(proveedor.id);
-                      }
-                    }}
+                    onClick={() =>
+                      handleDelete(proveedor.id, proveedor.nombre)
+                    }
                   >
                     <Trash2 className="size-4 text-red-600" />
                   </Button>

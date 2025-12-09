@@ -6,12 +6,13 @@ import { Switch } from './ui/switch';
 import { supabase } from '@/lib/supabase';
 
 interface ProveedorFormProps {
-  initialData?: any;
-  onSubmit?: () => void;
+  initialData?: any;      // objeto proveedor para editar
+  onSubmit?: () => void;  // callback para recargar lista y cerrar modal, etc.
 }
 
 export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     nombre: initialData?.nombre || '',
     contacto: initialData?.contacto || '',
@@ -27,45 +28,41 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
     try {
       let response;
 
-      // Si estamos editando un proveedor existente
+      // 🔁 EDITAR proveedor existente
       if (initialData?.id) {
         response = await supabase
           .from('proveedores')
           .update({
             nombre: formData.nombre,
-            ubicacion: formData.contacto,  // 👈 contacto se guarda en ubicacion
+            contacts: formData.contacto, // 👈 se guarda en la columna "contacts"
             telefono: formData.telefono,
             email: formData.email,
             activo: formData.activo,
           })
           .eq('id', initialData.id);
-      } 
-      // Si estamos creando un nuevo proveedor
-      else {
-        response = await supabase
-          .from('proveedores')
-          .insert([
-            {
-              nombre: formData.nombre,
-              ubicacion: formData.contacto, // 👈 contacto → ubicacion
-              telefono: formData.telefono,
-              email: formData.email,
-              activo: formData.activo,
-            }
-          ]);
+      } else {
+        // 🆕 CREAR nuevo proveedor
+        response = await supabase.from('proveedores').insert([
+          {
+            nombre: formData.nombre,
+            contacts: formData.contacto, // 👈 se guarda en "contacts"
+            telefono: formData.telefono,
+            email: formData.email,
+            activo: formData.activo,
+          },
+        ]);
       }
 
       const { error } = response;
 
       if (error) {
-        console.error("Error al guardar proveedor:", error);
-        alert("Error: " + error.message);
+        console.error('Error al guardar proveedor:', error);
+        alert('Error: ' + error.message);
         return;
       }
 
-      alert("Proveedor guardado correctamente.");
+      alert('Proveedor guardado correctamente.');
       onSubmit?.();
-
     } finally {
       setLoading(false);
     }
@@ -79,7 +76,9 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
           id="nombre"
           placeholder="Ej: Mariscos del Pacífico"
           value={formData.nombre}
-          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, nombre: e.target.value })
+          }
           required
         />
       </div>
@@ -90,7 +89,9 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
           id="contacto"
           placeholder="Nombre del contacto"
           value={formData.contacto}
-          onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, contacto: e.target.value })
+          }
           required
         />
       </div>
@@ -102,7 +103,9 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
           type="tel"
           placeholder="+593-99-123-4567"
           value={formData.telefono}
-          onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, telefono: e.target.value })
+          }
           required
         />
       </div>
@@ -114,7 +117,9 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
           type="email"
           placeholder="contacto@empresa.com"
           value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, email: e.target.value })
+          }
           required
         />
       </div>
@@ -136,10 +141,10 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
         disabled={loading}
       >
         {loading
-          ? "Guardando..."
+          ? 'Guardando...'
           : initialData
-          ? "Actualizar Proveedor"
-          : "Crear Proveedor"}
+          ? 'Actualizar Proveedor'
+          : 'Crear Proveedor'}
       </Button>
     </form>
   );
