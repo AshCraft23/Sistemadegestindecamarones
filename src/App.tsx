@@ -128,9 +128,8 @@ export default function App() {
   const selectedLote = lotes.find((l) => l.id === selectedLoteId);
 
   // ====================
-  // Fetch helpers
+  // FETCH: LOTES
   // ====================
-
   const fetchLotes = async () => {
     const { data, error } = await supabase
       .from("lotes")
@@ -165,6 +164,9 @@ export default function App() {
     }
   };
 
+  // ====================
+  // FETCH: VENTAS
+  // ====================
   const fetchVentas = async () => {
     const { data, error } = await supabase
       .from("ventas")
@@ -192,12 +194,9 @@ export default function App() {
     setVentas(mapped);
   };
 
-  const fetchCosechas = async () => {
-    // Si ya tienes tabla "cosechas" en Supabase, descomenta y ajusta columnas.
-    // Por ahora solo dejamos cosechas en memoria, así que no hacemos nada aquí.
-    return;
-  };
-
+  // ====================
+  // FETCH: PROVEEDORES
+  // ====================
   const fetchProveedores = async () => {
     const { data, error } = await supabase
       .from("proveedores")
@@ -221,6 +220,9 @@ export default function App() {
     );
   };
 
+  // ====================
+  // FETCH: PESCADORES
+  // ====================
   const fetchPescadores = async () => {
     const { data, error } = await supabase
       .from("pescadores")
@@ -243,6 +245,9 @@ export default function App() {
     );
   };
 
+  // ====================
+  // FETCH: VENDEDORES
+  // ====================
   const fetchVendedores = async () => {
     const { data, error } = await supabase
       .from("vendedores")
@@ -265,11 +270,13 @@ export default function App() {
     );
   };
 
+  // ====================
+  // FETCH ALL
+  // ====================
   const fetchAll = async () => {
     await Promise.all([
       fetchLotes(),
       fetchVentas(),
-      fetchCosechas(),
       fetchProveedores(),
       fetchPescadores(),
       fetchVendedores(),
@@ -277,16 +284,14 @@ export default function App() {
   };
 
   // ====================
-  // Realtime
+  // REALTIME
   // ====================
-
   useEffect(() => {
     fetchAll();
 
     const tables = [
       "lotes",
       "ventas",
-      "cosechas", // si aún no existe, simplemente no generará eventos
       "proveedores",
       "pescadores",
       "vendedores",
@@ -306,9 +311,6 @@ export default function App() {
               case "ventas":
                 fetchVentas();
                 break;
-              case "cosechas":
-                fetchCosechas();
-                break;
               case "proveedores":
                 fetchProveedores();
                 break;
@@ -325,17 +327,12 @@ export default function App() {
     );
 
     return () => {
-      channels.forEach((ch) => {
-        supabase.removeChannel(ch);
-      });
+      channels.forEach((ch) => supabase.removeChannel(ch));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
   // ====================
-  // Auth
+  // AUTH
   // ====================
-
   const handleLogin = (user: Usuario) => {
     setCurrentUser(user);
     if (lotes.length > 0 && !selectedLoteId) {
@@ -351,7 +348,6 @@ export default function App() {
   // ====================
   // CRUD LOTES
   // ====================
-
   const handleCreateLote = async (
     loteData: Omit<
       Lote,
@@ -416,16 +412,9 @@ export default function App() {
   };
 
   // ====================
-  // Cosechas (solo local + actualización de lote en BD)
+  // COSECHAS (solo local + update BD)
   // ====================
-
   const handleRegistrarCosecha = async (cosechaData: Omit<Cosecha, "id">) => {
-    const newCosecha: Cosecha = {
-      ...cosechaData,
-      id: `C-${String(cosechas.length + 1).padStart(3, "0")}`,
-    };
-    setCosechas((prev) => [...prev, newCosecha]);
-
     const lote = lotes.find((l) => l.id === cosechaData.loteId);
     const nuevasLibras =
       (lote?.librasCosechadas ?? 0) + (cosechaData.libras ?? 0);
@@ -457,9 +446,8 @@ export default function App() {
   };
 
   // ====================
-  // Ventas
+  // VENTAS
   // ====================
-
   const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
     const lote = lotes.find((l) => l.id === ventaData.loteId);
     const proveedorEncontrado = proveedores.find(
@@ -485,7 +473,7 @@ export default function App() {
       return;
     }
 
-    // Actualizar totales del lote
+    // actualizar totales
     const nuevasLibrasVendidas =
       (lote?.librasVendidas ?? 0) + ventaData.libras;
     const nuevosIngresos =
@@ -505,7 +493,6 @@ export default function App() {
       return;
     }
 
-    // Actualizar estado localmente
     setLotes((prev) =>
       prev.map((l) =>
         l.id === ventaData.loteId
@@ -520,153 +507,65 @@ export default function App() {
   };
 
   // ====================
-  // CRUD Proveedores / Pescadores / Vendedores
+  // CRUD Proveedor / Pescador / Vendedor
   // ====================
-
   const handleCreateProveedor = async (proveedorData: Omit<Proveedor, "id">) => {
-    const { error } = await supabase.from("proveedores").insert({
+    await supabase.from("proveedores").insert({
       nombre: proveedorData.nombre,
       contacto: proveedorData.contacto,
       telefono: proveedorData.telefono,
       email: proveedorData.email,
       activo: proveedorData.activo,
     });
-
-    if (error) {
-      alert("Error creando proveedor: " + error.message);
-      return;
-    }
   };
 
   const handleUpdateProveedor = async (
     id: string,
     proveedorData: Omit<Proveedor, "id">
   ) => {
-    const { error } = await supabase
+    await supabase
       .from("proveedores")
-      .update({
-        nombre: proveedorData.nombre,
-        contacto: proveedorData.contacto,
-        telefono: proveedorData.telefono,
-        email: proveedorData.email,
-        activo: proveedorData.activo,
-      })
+      .update(proveedorData)
       .eq("id", id);
-
-    if (error) {
-      alert("Error actualizando proveedor: " + error.message);
-      return;
-    }
   };
 
   const handleDeleteProveedor = async (id: string) => {
-    const { error } = await supabase
-      .from("proveedores")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      alert("Error eliminando proveedor: " + error.message);
-      return;
-    }
+    await supabase.from("proveedores").delete().eq("id", id);
   };
 
   const handleCreatePescador = async (pescadorData: Omit<Pescador, "id">) => {
-    const { error } = await supabase.from("pescadores").insert({
-      nombre: pescadorData.nombre,
-      telefono: pescadorData.telefono,
-      especialidad: pescadorData.especialidad,
-      activo: pescadorData.activo,
-    });
-
-    if (error) {
-      alert("Error creando pescador: " + error.message);
-      return;
-    }
+    await supabase.from("pescadores").insert(pescadorData);
   };
 
   const handleUpdatePescador = async (
     id: string,
     pescadorData: Omit<Pescador, "id">
   ) => {
-    const { error } = await supabase
-      .from("pescadores")
-      .update({
-        nombre: pescadorData.nombre,
-        telefono: pescadorData.telefono,
-        especialidad: pescadorData.especialidad,
-        activo: pescadorData.activo,
-      })
-      .eq("id", id);
-
-    if (error) {
-      alert("Error actualizando pescador: " + error.message);
-      return;
-    }
+    await supabase.from("pescadores").update(pescadorData).eq("id", id);
   };
 
   const handleDeletePescador = async (id: string) => {
-    const { error } = await supabase
-      .from("pescadores")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      alert("Error eliminando pescador: " + error.message);
-      return;
-    }
+    await supabase.from("pescadores").delete().eq("id", id);
   };
 
   const handleCreateVendedor = async (vendedorData: Omit<Vendedor, "id">) => {
-    const { error } = await supabase.from("vendedores").insert({
-      nombre: vendedorData.nombre,
-      telefono: vendedorData.telefono,
-      email: vendedorData.email,
-      activo: vendedorData.activo,
-    });
-
-    if (error) {
-      alert("Error creando vendedor: " + error.message);
-      return;
-    }
+    await supabase.from("vendedores").insert(vendedorData);
   };
 
   const handleUpdateVendedor = async (
     id: string,
     vendedorData: Omit<Vendedor, "id">
   ) => {
-    const { error } = await supabase
-      .from("vendedores")
-      .update({
-        nombre: vendedorData.nombre,
-        telefono: vendedorData.telefono,
-        email: vendedorData.email,
-        activo: vendedorData.activo,
-      })
-      .eq("id", id);
-
-    if (error) {
-      alert("Error actualizando vendedor: " + error.message);
-      return;
-    }
+    await supabase.from("vendedores").update(vendedorData).eq("id", id);
   };
 
   const handleDeleteVendedor = async (id: string) => {
-    const { error } = await supabase
-      .from("vendedores")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      alert("Error eliminando vendedor: " + error.message);
-      return;
-    }
+    await supabase.from("vendedores").delete().eq("id", id);
   };
 
   // ====================
-  // UI
+  // UI LOGIN
   // ====================
-
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center p-4">
@@ -680,13 +579,15 @@ export default function App() {
           <p className="text-center text-gray-600 mb-8">
             Gestión de Camarones por Lotes
           </p>
-
           <LoginForm onLogin={handleLogin} />
         </div>
       </div>
     );
   }
 
+  // ====================
+  // UI PARA PESCADOR
+  // ====================
   if (currentUser.rol === "Pescador") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
@@ -725,6 +626,9 @@ export default function App() {
     );
   }
 
+  // ====================
+  // UI GENERAL
+  // ====================
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
       <header className="bg-white border-b border-gray-200 shadow-sm">
@@ -786,22 +690,28 @@ export default function App() {
         >
           <TabsList className="bg-white">
             {currentUser.rol === "Administrador" && (
-              <TabsTrigger value="dashboard-anual">Dashboard Anual</TabsTrigger>
+              <TabsTrigger value="dashboard-anual">
+                Dashboard Anual
+              </TabsTrigger>
             )}
+
             {currentUser.rol !== "Vendedor" && (
               <>
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="lotes">Gestión de Lotes</TabsTrigger>
               </>
             )}
+
             {currentUser.rol === "Propietario" && (
               <TabsTrigger value="cosecha">Registrar Cosecha</TabsTrigger>
             )}
+
             {(currentUser.rol === "Vendedor" ||
               currentUser.rol === "Propietario" ||
               currentUser.rol === "Administrador") && (
               <TabsTrigger value="venta">Registrar Venta</TabsTrigger>
             )}
+
             {(currentUser.rol === "Propietario" ||
               currentUser.rol === "Administrador") && (
               <TabsTrigger value="administracion">Administración</TabsTrigger>
@@ -816,13 +726,11 @@ export default function App() {
 
           {currentUser.rol !== "Vendedor" && (
             <>
-              <TabsContent value="dashboard">
+              <TabsContent value="dashboard
                 {selectedLote ? (
                   <Dashboard
                     lote={selectedLote}
-                    ventas={ventas.filter(
-                      (v) => v.loteId === selectedLote.id
-                    )}
+                    ventas={ventas.filter((v) => v.loteId === selectedLote.id)}
                     cosechas={cosechas.filter(
                       (c) => c.loteId === selectedLote.id
                     )}

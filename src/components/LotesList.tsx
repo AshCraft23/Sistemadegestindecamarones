@@ -22,9 +22,11 @@ export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProp
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {lotes.map((lote) => {
         const isSelected = lote.id === selectedLoteId;
+
+        // 🔥 Variables REALMENTE existentes en Lote (según App.tsx)
         const librasDisponibles = lote.librasCosechadas - lote.librasVendidas;
         const gananciaBruta = lote.ingresosTotales - lote.costoProduccion;
-        
+
         return (
           <Card
             key={lote.id}
@@ -45,37 +47,46 @@ export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProp
               </div>
 
               <div className="space-y-3">
+                {/* Tipo de camarón */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Fish className="size-4 text-cyan-600" />
                   <span>{lote.tipoCamaron}</span>
                 </div>
 
+                {/* Fechas */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-cyan-600" />
-                  <span>Inicio: {new Date(lote.fechaInicio).toLocaleDateString('es-ES')}</span>
+                  <span>
+                    Inicio: {new Date(lote.fechaInicio).toLocaleDateString('es-ES')}
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-teal-600" />
-                  <span>Est. Pesca: {new Date(lote.fechaEstimadaPesca).toLocaleDateString('es-ES')}</span>
+                  <span>
+                    Est. Pesca: {new Date(lote.fechaEstimadaPesca).toLocaleDateString('es-ES')}
+                  </span>
                 </div>
 
+                {/* Datos financieros */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Cosechado:</span>
                     <span>{lote.librasCosechadas.toFixed(2)} lb</span>
                   </div>
-                  
+
                   {lote.librasCosechadas > 0 && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Vendido:</span>
                         <span>{lote.librasVendidas.toFixed(2)} lb</span>
                       </div>
-                      
+
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Disponible:</span>
-                        <span className="text-cyan-600">{librasDisponibles.toFixed(2)} lb</span>
+                        <span className="text-cyan-600">
+                          {librasDisponibles.toFixed(2)} lb
+                        </span>
                       </div>
                     </>
                   )}
