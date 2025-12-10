@@ -206,31 +206,31 @@ export default function App() {
   // FETCH: VENTAS
   // ====================
   const fetchVentas = async () => {
-    const { data, error } = await supabase
-      .from("ventas")
-      .select(
-        "id, lote_id, fecha, libras, precio_libra, proveedor_no, vendedor_nor"
-      )
-      .order("fecha", { ascending: false });
+  const { data, error } = await supabase
+    .from("ventas")
+    .select(
+      "id, lote_id, fecha, libras, precio_libra, proveedor_no, vendedor_nor"
+    )
+    .order("fecha", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando ventas:", error);
-      return;
-    }
+  if (error) {
+    console.error("Error cargando ventas:", error);
+    return;
+  }
 
-    const mapped: Venta[] =
-      data?.map((row: any) => ({
-        id: row.id,
-        loteId: row.lote_id,
-        fecha: row.fecha,
-        libras: Number(row.libras) || 0,
-        precioLibra: Number(row.precio_libra) || 0,
-        proveedor: row.proveedor_no ?? "",
-        vendedor: row.vendedor_nor ?? "",
-      })) ?? [];
+  const mapped: Venta[] =
+    data?.map((row: any) => ({
+      id: row.id,
+      loteId: row.lote_id,
+      fecha: row.fecha,
+      libras: Number(row.libras) || 0,
+      precioLibra: Number(row.precio_libra) || 0,
+      proveedor: row.proveedor_no ?? "",
+      vendedor: row.vendedor_nor ?? "",
+    })) ?? [];
 
-    setVentas(mapped);
-  };
+  setVentas(mapped);
+};
 
   // ====================
   // FETCH: PROVEEDORES

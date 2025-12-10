@@ -14,7 +14,17 @@ import {
   Cell,
   Legend
 } from "recharts";
-import { Calendar, DollarSign, TrendingUp, Percent, Weight, AlertCircle, Edit2, Check, X } from "lucide-react";
+import {
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  Percent,
+  Weight,
+  AlertCircle,
+  Edit2,
+  Check,
+  X
+} from "lucide-react";
 import { Lote, Venta, Cosecha, UserRole } from "../App";
 import { KPICard } from "./KPICard";
 import { TransactionTable } from "./TransactionTable";
@@ -51,7 +61,7 @@ export function Dashboard({
   const [editandoFecha, setEditandoFecha] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
 
-  // Valores normalizados
+  // Normalización para evitar undefined
   const librasCosechadas = Number(lote.librascosechadas) || 0;
   const librasVendidas = Number(lote.librasvendidas) || 0;
   const costoProduccion = Number(lote.costo_produccion) || 0;
@@ -65,8 +75,10 @@ export function Dashboard({
   const margenGanancia =
     costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
 
-  // Agrupación segura por proveedor
-  const ventasPorProveedor = ventas.reduce((acc, venta) => {
+  // Protección contra ventas undefined
+  const ventasLista = Array.isArray(ventas) ? ventas : [];
+
+  const ventasPorProveedor = ventasLista.reduce((acc, venta) => {
     const libras = Number(venta.libras) || 0;
     const precio = Number(venta.precioLibra) || 0;
 
@@ -77,7 +89,7 @@ export function Dashboard({
       existente.ingresos += libras * precio;
     } else {
       acc.push({
-        proveedor: venta.proveedor,
+        proveedor: venta.proveedor || "N/D",
         libras,
         ingresos: libras * precio
       });
@@ -123,6 +135,7 @@ export function Dashboard({
                 {/* Fecha estimada pesca */}
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
+
                   {editandoFecha ? (
                     <>
                       <Input
@@ -159,6 +172,7 @@ export function Dashboard({
                           lote.fecha_estimada_pesca
                         ).toLocaleDateString("es-ES")}
                       </span>
+
                       {userRole === "Administrador" && (
                         <Button
                           size="sm"
@@ -307,7 +321,7 @@ export function Dashboard({
           <CardTitle>Historial de Transacciones</CardTitle>
         </CardHeader>
         <CardContent>
-          <TransactionTable ventas={ventas} cosechas={cosechas} />
+          <TransactionTable ventas={ventasLista} cosechas={cosechas} />
         </CardContent>
       </Card>
     </div>
