@@ -12,7 +12,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export interface Proveedor {
-  id: string;
+  id: string; // UUID generado por Supabase
   nombre: string;
   contacto: string;
   telefono: string;
@@ -23,7 +23,7 @@ export interface Proveedor {
 interface ProveedorTableProps {
   proveedores: Proveedor[];
   onEdit: (proveedor: Proveedor) => void;
-  onRefresh: () => void; // 🔁 recargar lista después de eliminar
+  onRefresh: () => void;
 }
 
 export function ProveedorTable({
@@ -31,10 +31,12 @@ export function ProveedorTable({
   onEdit,
   onRefresh,
 }: ProveedorTableProps) {
+  
   const handleDelete = async (id: string, nombre: string) => {
     const ok = confirm(`¿Está seguro de eliminar a ${nombre}?`);
     if (!ok) return;
 
+    // 🔥 Aquí se usa UUID verdadero, no PR-003
     const { error } = await supabase
       .from('proveedores')
       .delete()
@@ -47,7 +49,7 @@ export function ProveedorTable({
     }
 
     alert('Proveedor eliminado correctamente.');
-    onRefresh();
+    onRefresh(); // recarga lista
   };
 
   if (proveedores.length === 0) {
@@ -73,44 +75,45 @@ export function ProveedorTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {proveedores.map((proveedor) => (
-            <TableRow key={proveedor.id}>
-              <TableCell>{proveedor.id}</TableCell>
-              <TableCell>{proveedor.nombre}</TableCell>
-              <TableCell>{proveedor.contacto}</TableCell>
-              <TableCell>{proveedor.telefono}</TableCell>
-              <TableCell>{proveedor.email}</TableCell>
+          {proveedores.map((p) => (
+            <TableRow key={p.id}>
+              <TableCell>{p.id}</TableCell>
+              <TableCell>{p.nombre}</TableCell>
+              <TableCell>{p.contacto}</TableCell>
+              <TableCell>{p.telefono}</TableCell>
+              <TableCell>{p.email}</TableCell>
               <TableCell>
                 <Badge
                   className={
-                    proveedor.activo
+                    p.activo
                       ? 'bg-green-100 text-green-800 border-green-200'
                       : 'bg-gray-100 text-gray-800 border-gray-200'
                   }
                 >
-                  {proveedor.activo ? 'Activo' : 'Inactivo'}
+                  {p.activo ? 'Activo' : 'Inactivo'}
                 </Badge>
               </TableCell>
+
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onEdit(proveedor)}
+                    onClick={() => onEdit(p)}
                   >
                     <Pencil className="size-4" />
                   </Button>
+
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      handleDelete(proveedor.id, proveedor.nombre)
-                    }
+                    onClick={() => handleDelete(p.id, p.nombre)}
                   >
                     <Trash2 className="size-4 text-red-600" />
                   </Button>
                 </div>
               </TableCell>
+
             </TableRow>
           ))}
         </TableBody>

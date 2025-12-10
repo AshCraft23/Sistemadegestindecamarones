@@ -29,7 +29,7 @@ export default function ProovedorList() {
       data?.map((p: any) => ({
         id: p.id,
         nombre: p.nombre,
-        contacto: p.contacts ?? '',
+        contacts: p.contacts ?? '',
         telefono: p.telefono ?? '',
         email: p.email ?? '',
         activo: p.activo ?? true,
