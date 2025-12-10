@@ -13,24 +13,15 @@ export default function ProovedorList() {
   const fetchProveedores = async () => {
     const { data, error } = await supabase
       .from("proveedores")
-      .select("id, nombre, contacts, telefono, email, activo");
+      .select("id, nombre, contacto, telefono, email, activo"); // ← CAMBIO CLAVE
 
     if (error) {
       console.error("Error cargando proveedores:", error);
       return;
     }
 
-    // 🔥 Mapear contacts → contacto
-    const mapped = data.map((p) => ({
-      id: p.id,
-      nombre: p.nombre,
-      contacto: p.contacts,   // ← CORRECCIÓN
-      telefono: p.telefono,
-      email: p.email,
-      activo: p.activo,
-    }));
-
-    setProveedores(mapped);
+    // No necesitas mapear nada porque ya viene como contacto
+    setProveedores(data);
   };
 
   useEffect(() => {
@@ -45,7 +36,7 @@ export default function ProovedorList() {
         nombre: nuevo.nombre,
         telefono: nuevo.telefono,
         email: nuevo.email,
-        contacts: nuevo.contacto, // ← CORRECCIÓN
+        contacto: nuevo.contacto, // ← CORRECTO
         activo: nuevo.activo,
       });
 
@@ -65,7 +56,7 @@ export default function ProovedorList() {
         nombre: data.nombre,
         telefono: data.telefono,
         email: data.email,
-        contacts: data.contacto, // ← CORRECCIÓN
+        contacto: data.contacto, // ← CORRECTO
         activo: data.activo,
       })
       .eq("id", id);
