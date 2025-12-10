@@ -149,10 +149,10 @@ export function Dashboard({
                   Inicio: {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
+
                 {/* FECHA ESTIMADA DE PESCA */}
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
-
                   {editandoFecha ? (
                     <>
                       <Input
@@ -185,11 +185,8 @@ export function Dashboard({
                   ) : (
                     <>
                       <span>
-                        {new Date(lote.fecha_estimada_pesca).toLocaleDateString(
-                          "es-ES"
-                        )}
+                        {new Date(lote.fecha_estimada_pesca).toLocaleDateString("es-ES")}
                       </span>
-
                       {userRole === "Administrador" && (
                         <Button
                           size="sm"
@@ -202,6 +199,27 @@ export function Dashboard({
                     </>
                   )}
                 </div>
+
+                {/* CAMBIO MANUAL DE ESTADO */}
+                {(userRole === "Propietario" || userRole === "Administrador") && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-sm text-gray-600">Estado:</span>
+
+                    <select
+                      className="border rounded px-2 py-1 text-sm"
+                      value={lote.estado}
+                      onChange={(e) => onUpdateEstado(lote.id, e.target.value as Lote["estado"])}
+                    >
+                      <option value="Crianza">Crianza</option>
+                      <option value="Listo para Pescar">Listo para Pescar</option>
+                      <option value="En Venta">En Venta</option>
+                      <option value="Reposo">Reposo</option>
+                      <option value="Descarte">Descarte</option>
+                    </select>
+                  </div>
+                )}
+
+
 
                 <span>Días en ciclo: {diasEnCiclo}</span>
               </div>
