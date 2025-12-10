@@ -34,8 +34,8 @@ export function CosechaForm({
   const [formData, setFormData] = useState({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
-    libras: 0,
-    pescador_id: pescadorId,  // se autocompleta correctamente
+    libras: "",
+    pescador_id: pescadorId,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -46,22 +46,23 @@ export function CosechaForm({
       return;
     }
 
-    if (formData.libras <= 0) {
-      alert("Las libras deben ser mayores a 0.");
+    const librasNum = Number(formData.libras);
+    if (isNaN(librasNum) || librasNum <= 0) {
+      alert("Las libras deben ser un número mayor a 0.");
       return;
     }
 
     onSubmit({
       loteId: formData.loteId,
       fecha: formData.fecha,
-      libras: Number(formData.libras),   // <-- AHORA CORRECTO
+      libras: librasNum,
       pescador_id: formData.pescador_id,
     });
 
     setFormData({
       loteId: "",
       fecha: new Date().toISOString().split("T")[0],
-      libras: 0,
+      libras: "",
       pescador_id: pescadorId,
     });
   };
@@ -74,7 +75,7 @@ export function CosechaForm({
             <AlertCircle className="size-5" />
             <p>
               No hay lotes disponibles para cosecha.
-              Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.
+              Solo los lotes en estado <b>"Listo para Pescar"</b> pueden cosecharse.
             </p>
           </div>
         </CardContent>
@@ -135,10 +136,7 @@ export function CosechaForm({
               step="0.01"
               value={formData.libras}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  libras: parseFloat(e.target.value) || 0,
-                })
+                setFormData({ ...formData, libras: e.target.value })
               }
             />
           </div>
