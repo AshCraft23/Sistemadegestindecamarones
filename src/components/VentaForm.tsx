@@ -205,3 +205,11 @@ export function VentaForm({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <Button className="w-full bg-teal-600 text-white hover:bg-teal-700">
+        Registrar venta
+      </Button>
+    </form>
+  );
+}
