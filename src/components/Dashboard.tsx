@@ -149,7 +149,6 @@ export function Dashboard({
                   Inicio: {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
-
                 {/* FECHA ESTIMADA DE PESCA */}
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
@@ -203,8 +202,6 @@ export function Dashboard({
                     </>
                   )}
                 </div>
-
-
 
                 <span>Días en ciclo: {diasEnCiclo}</span>
               </div>
