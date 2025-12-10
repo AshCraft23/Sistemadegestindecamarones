@@ -16,7 +16,7 @@ import { Lote, Pescador } from "../App";
 interface CosechaFormProps {
   lotes: Lote[];
   pescadores: Pescador[];
-  pescadorId: string; // ahora recibimos el ID del pescador autenticado
+  pescadorId: string;
   onSubmit: (data: {
     loteId: string;
     fecha: string;
@@ -51,7 +51,10 @@ export function CosechaForm({
       return;
     }
 
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      libras: Number(formData.libras),
+    });
 
     setFormData({
       loteId: "",
@@ -68,7 +71,7 @@ export function CosechaForm({
           <div className="flex items-center gap-3 text-yellow-800">
             <AlertCircle className="size-5" />
             <p>
-              No hay lotes disponibles para cosecha.  
+              No hay lotes disponibles para cosecha. 
               Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.
             </p>
           </div>
@@ -85,6 +88,7 @@ export function CosechaForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+
           {/* LOTE */}
           <div className="space-y-2">
             <Label>Lote</Label>
@@ -97,6 +101,7 @@ export function CosechaForm({
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar lote" />
               </SelectTrigger>
+
               <SelectContent>
                 {lotes.map((lote) => (
                   <SelectItem key={lote.id} value={lote.id}>
@@ -126,7 +131,7 @@ export function CosechaForm({
               type="number"
               min="0.01"
               step="0.01"
-              value={formData.libras || ""}
+              value={formData.libras}
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -146,8 +151,9 @@ export function CosechaForm({
               }
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Seleccionar pescador" />
               </SelectTrigger>
+
               <SelectContent>
                 {pescadores.map((p) => (
                   <SelectItem key={p.id} value={p.id}>

@@ -71,18 +71,7 @@ export interface Lote {
   libras_vendidas: number;
   ingresos_totales: number;
 
-  // Alias antiguos sin guión bajo (LotesList / filtros)
-  librascosechadas: number;
-  librasvendidas: number;
-  ingresostotales: number;
-
-  // Alias camelCase usados en Dashboard
-  fechaInicio: string;
-  fechaEstimadaPesca: string;
-  tipoCamaron: string;
-  librasCosechadas: number;
-  librasVendidas: number;
-  ingresosTotales: number;
+  
 }
 
 export interface Cosecha {
@@ -157,41 +146,18 @@ export default function App() {
       return;
     }
 
-    const mapped: Lote[] =
-      data?.map((row: any) => {
-        const librasC = Number(row.libras_cosechadas) || 0;
-        const librasV = Number(row.libras_vendidas) || 0;
-        const ingresos = Number(row.ingresos_totales) || 0;
-        const costo = Number(row.costo_produccion) || 0;
-
-        return {
-          id: row.id,
-          nombre: row.nombre,
-          fecha_inicio: row.fecha_inicio,
-          fecha_estimada_pesca: row.fecha_estimada_pesca,
-          tipo_camaron: row.tipo_camaron,
-          estado: row.estado as EstadoLote,
-          costo_produccion: costo,
-
-          // reales de la vista
-          libras_cosechadas: librasC,
-          libras_vendidas: librasV,
-          ingresos_totales: ingresos,
-
-          // alias sin guión bajo
-          librascosechadas: librasC,
-          librasvendidas: librasV,
-          ingresostotales: ingresos,
-
-          // alias camelCase
-          fechaInicio: row.fecha_inicio,
-          fechaEstimadaPesca: row.fecha_estimada_pesca,
-          tipoCamaron: row.tipo_camaron,
-          librasCosechadas: librasC,
-          librasVendidas: librasV,
-          ingresosTotales: ingresos,
-        };
-      }) ?? [];
+    const mapped: Lote[] = data?.map((row: any) => ({
+      id: row.id,
+      nombre: row.nombre,
+      fecha_inicio: row.fecha_inicio,
+      fecha_estimada_pesca: row.fecha_estimada_pesca,
+      tipo_camaron: row.tipo_camaron,
+      estado: row.estado,
+      costo_produccion: Number(row.costo_produccion) || 0,
+      libras_cosechadas: Number(row.libras_cosechadas) || 0,
+      libras_vendidas: Number(row.libras_vendidas) || 0,
+      ingresos_totales: Number(row.ingresos_totales) || 0,
+    })) ?? [];
 
     setLotes(mapped);
 
