@@ -572,40 +572,59 @@ export default function App() {
   // ====================
   // VENTAS
   // ====================
-  const handleRegistrarVenta = async (ventaData: {
-    loteId: string;
-    fecha: string;
-    libras: number;
-    precioLibra: number;
-    proveedor: string;
-    vendedor: string;
-  }) => {
-    const proveedorEncontrado = proveedores.find(
-      (p) => p.nombre === ventaData.proveedor
-    );
-    const vendedorEncontrado = vendedores.find(
-      (v) => v.nombre === ventaData.vendedor
-    );
+  // ====================
+// VENTAS (CORREGIDO)
+// ====================
+const handleRegistrarVenta = async (ventaData: {
+  lote_id: string;
+  fecha: string;
+  libras: number;
+  precio_libra: number;
+  proveedor_id: string | null;
+  proveedor_nombre: string;
+  vendedor_id: string;
+  vendedor_nombre: string;
+}) => {
 
-    const { error } = await supabase.from("ventas").insert({
-      lote_id: ventaData.loteId,
-      fecha: ventaData.fecha,
-      libras: ventaData.libras,
-      precio_libra: ventaData.precioLibra,
-      proveedor_id: proveedorEncontrado?.id ?? null,
-      proveedor_nombre: ventaData.proveedor,
-      vendedor_id: vendedorEncontrado?.id ?? null,
-      vendedor_nombre: ventaData.vendedor,
-    });
+  console.log("DATA DE VENTA RECIBIDA:", ventaData);
 
-    if (error) {
-      alert("Error registrando venta: " + error.message);
-      return;
-    }
+  if (!ventaData.lote_id) {
+    alert("Error: Falta seleccionar lote.");
+    return;
+  }
 
-    await fetchVentas();
-    await fetchLotes();
-  };
+  if (!ventaData.vendedor_id) {
+    alert("Error: vendedor inválido.");
+    return;
+  }
+
+  //  Insertar venta correctamente
+  const { error } = await supabase.from("ventas").insert({
+    lote_id: ventaData.lote_id,
+    fecha: ventaData.fecha,
+    libras: ventaData.libras,
+    precio_libra: ventaData.precio_libra,
+
+    proveedor_id: ventaData.proveedor_id,
+    proveedor_nombre: ventaData.proveedor_nombre,
+
+    vendedor_id: ventaData.vendedor_id,
+    vendedor_nombre: ventaData.vendedor_nombre,
+  });
+
+  if (error) {
+    console.error("Supabase venta error:", error);
+    alert("Error registrando venta: " + error.message);
+    return;
+  }
+
+  //  Recargar datos necesarios
+  await fetchVentas();
+  await fetchLotes();
+
+  alert("Venta registrada correctamente.");
+};
+
 
   // ====================
   // CRUD Proveedor / Pescador / Vendedor
