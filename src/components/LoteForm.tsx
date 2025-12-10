@@ -32,16 +32,29 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
     costo_produccion: 0,
   });
 
-  // 🧮 Calcular fecha estimada de pesca = 90 días después
+  // 📌 Inicializar fecha estimada la primera vez
   useEffect(() => {
-    const fecha = new Date(formData.fecha_inicio);
-    const estimada = new Date(fecha);
-    estimada.setDate(fecha.getDate() + 90);
+    if (!formData.fecha_estimada_pesca) {
+      const fecha = new Date(formData.fecha_inicio);
+      fecha.setDate(fecha.getDate() + 90);
+      setFormData((prev) => ({
+        ...prev,
+        fecha_estimada_pesca: fecha.toISOString().split("T")[0],
+      }));
+    }
+  }, []);
 
-    setFormData((f) => ({
-      ...f,
-      fecha_estimada_pesca: estimada.toISOString().split("T")[0],
-    }));
+  // 📌 Cuando cambia fecha_inicio → recalcular fecha_estimada solo si NO fue cambiada manualmente
+  useEffect(() => {
+    const nueva = new Date(formData.fecha_inicio);
+    nueva.setDate(nueva.getDate() + 90);
+    const nuevaISO = nueva.toISOString().split("T")[0];
+
+    setFormData((prev) =>
+      prev.fecha_estimada_pesca === nuevaISO
+        ? prev // si coincide, no toca nada
+        : { ...prev, fecha_estimada_pesca: nuevaISO }
+    );
   }, [formData.fecha_inicio]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,7 +64,7 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      
+
       {/* Nombre */}
       <div className="space-y-2">
         <Label htmlFor="nombre">Nombre del Lote</Label>
@@ -78,10 +91,10 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         />
       </div>
 
-      {/* Fecha estimada de pesca */}
+      {/* Fecha estimada editable */}
       <div className="space-y-2">
         <Label htmlFor="fecha_estimada_pesca">
-          Fecha Estimada de Pesca (90 días)
+          Fecha Estimada de Pesca (editable)
         </Label>
         <Input
           id="fecha_estimada_pesca"
@@ -107,7 +120,7 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
           }
         >
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Selecciona un tipo" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Vannamei">Vannamei</SelectItem>
@@ -128,7 +141,7 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
           }
         >
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Selecciona un estado" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Crianza">Crianza</SelectItem>
@@ -151,14 +164,16 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
           onChange={(e) =>
             setFormData({
               ...formData,
-              costo_produccion: parseFloat(e.target.value) || 0,
+              costo_produccion: Number(e.target.value) || 0,
             })
           }
           required
         />
       </div>
 
-      <Button className="w-full bg-cyan-600">Crear Lote</Button>
+      <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
+        Crear Lote
+      </Button>
     </form>
   );
 }
