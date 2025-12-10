@@ -3,12 +3,12 @@
 
   Proyecto Final de Ingieneria de Software 2
 
-El proposito de este software es que sirva de gestión y dashboard parr organizar inventario y ganancias de una granja de Camarones.
+El proposito de este software es que sirva de gestión y dashboard para organizar inventario y ganancias de una granja de Camarones.
 
-#Frontend
+## Frontend
 React + Vite
 
-#Backend
+## Backend
 PostgreSQL
 
   
