@@ -46,13 +46,16 @@ export function VentaForm({
     vendedor: vendedorNombre,
   });
 
+  // Buscar lote seleccionado
   const selected = lotes.find((l) => l.id === form.lote_id);
-  const inventario = selected?.libras_en_inventario ?? 0;
+
+  // Inventario calculado desde App.tsx
+  const inventario = Number(selected?.libras_en_inventario ?? 0);
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (form.lote_id === "") {
+    if (!form.lote_id) {
       alert("Debes seleccionar un lote.");
       return;
     }
@@ -70,7 +73,7 @@ export function VentaForm({
     onSubmit(form);
   };
 
-  // 🟡 MOSTRAR MENSAJE SI NO HAY LOTES DISPONIBLES
+  // 🟡 SIN LOTES DISPONIBLES
   if (lotes.length === 0) {
     return (
       <Card className="border-yellow-300 bg-yellow-50">
@@ -83,8 +86,10 @@ export function VentaForm({
   }
 
   return (
-    <form onSubmit={handle} className="space-y-4 bg-white p-6 rounded-lg shadow">
-
+    <form
+      onSubmit={handle}
+      className="space-y-4 bg-white p-6 rounded-lg shadow"
+    >
       {/* LOTE */}
       <div>
         <Label>Lote</Label>
@@ -97,7 +102,7 @@ export function VentaForm({
           </SelectTrigger>
           <SelectContent>
             {lotes.map((l) => (
-              <SelectItem key={l.id} value={l.id}>
+              <SelectItem key={l.id} value={String(l.id)}>
                 {l.nombre} — {l.libras_en_inventario.toFixed(2)} lb disp.
               </SelectItem>
             ))}
@@ -142,8 +147,9 @@ export function VentaForm({
           <Input
             type="number"
             step="0.01"
-            value={form.libras}
+            min={0}
             max={inventario}
+            value={form.libras}
             onChange={(e) =>
               setForm({ ...form, libras: parseFloat(e.target.value) || 0 })
             }

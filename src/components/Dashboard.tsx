@@ -32,6 +32,16 @@ import { TransactionTable } from "./TransactionTable";
 import { Badge } from "./ui/badge";
 import { useState } from "react";
 
+interface DashboardProps {
+  lote: Lote;
+  ventas: Venta[];
+  cosechas: Cosecha[];
+  userRole: UserRole;
+  onUpdateEstado: (loteId: string, estado: Lote["estado"]) => void;
+  onUpdateFechaPesca: (loteId: string, fecha: string) => void;
+  onDeleteLote: (loteId: string) => void;
+}
+
 const TODOS_LOS_ESTADOS: Lote["estado"][] = [
   "Crianza",
   "Listo para Pescar",
@@ -67,22 +77,33 @@ export function Dashboard({
     );
   }
 
-  const librasCosechadas = Number(
-    lote.librascosechadas ?? lote.libras_cosechadas ?? 0
+  // 🔥 AHORA TODO SE CALCULA DESDE LAS TABLAS REALES
+  const librasCosechadas = cosechas.reduce(
+    (total, c) => total + Number(c.libras || 0),
+    0
   );
-  const librasVendidas = Number(
-    lote.librasvendidas ?? lote.libras_vendidas ?? 0
+
+  const librasVendidas = ventas.reduce(
+    (total, v) => total + Number(v.libras || 0),
+    0
   );
-  const costoProduccion = Number(lote.costo_produccion ?? 0);
-  const ingresosTotales = Number(
-    lote.ingresostotales ?? lote.ingresos_totales ?? 0
+
+  const ingresosTotales = ventas.reduce(
+    (total, v) => total + Number(v.libras) * Number(v.precioLibra),
+    0
   );
+
+  const costoProduccion = Number(lote.costo_produccion || 0);
 
   const librasDisponibles = Math.max(librasCosechadas - librasVendidas, 0);
 
   const gananciaBruta = ingresosTotales - costoProduccion;
+
   const porcentajeVendido =
-    librasCosechadas > 0 ? (librasVendidas / librasCosechadas) * 100 : 0;
+    librasCosechadas > 0
+      ? (librasVendidas / librasCosechadas) * 100
+      : 0;
+
   const margenGanancia =
     costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
 
@@ -121,7 +142,6 @@ export function Dashboard({
   const [editandoFecha, setEditandoFecha] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
 
-  // 🔥 NUEVO estado para el menú de cambiar estado
   const [showEstadoMenu, setShowEstadoMenu] = useState(false);
 
   const handleDelete = () => {
@@ -140,6 +160,7 @@ export function Dashboard({
 
   return (
     <div className="space-y-6">
+      {/* ENCABEZADO DEL LOTE */}
       <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -153,110 +174,65 @@ export function Dashboard({
 
               <div className="flex items-center flex-wrap gap-6 text-sm text-gray-600">
                 <span>ID: {lote.id.substring(0, 8)}...</span>
-
                 <span>Tipo: {lote.tipo_camaron}</span>
-
                 <span>
                   Inicio:{" "}
                   {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
-                {/* FECHA + BOTÓN CAMBIAR ESTADO */}
-                <div className="flex items-center gap-3 relative">
-                  {/* FECHA */}
-                  <div className="flex items-center gap-2">
-                    <Calendar className="size-4 text-cyan-600" />
+                {/* FECHA ESTIMADA */}
+                <div className="flex items-center gap-2">
+                  <Calendar className="size-4 text-cyan-600" />
 
-                    {editandoFecha ? (
-                      <>
-                        <Input
-                          type="date"
-                          value={nuevaFecha}
-                          onChange={(e) => setNuevaFecha(e.target.value)}
-                          className="w-40 h-8"
-                        />
-                        <Button
-                          size="sm"
-                          className="h-8 bg-green-600"
-                          onClick={() => {
-                            onUpdateFechaPesca(lote.id, nuevaFecha);
-                            setEditandoFecha(false);
-                          }}
-                        >
-                          <Check className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8"
-                          onClick={() => {
-                            setNuevaFecha(lote.fecha_estimada_pesca);
-                            setEditandoFecha(false);
-                          }}
-                        >
-                          <X className="size-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <span>
-                          {new Date(
-                            lote.fecha_estimada_pesca
-                          ).toLocaleDateString("es-ES")}
-                        </span>
-
-                        {(userRole === "Administrador" ||
-                          userRole === "Propietario") && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => setEditandoFecha(true)}
-                          >
-                            <Edit2 className="size-4" />
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* BOTÓN CAMBIAR ESTADO */}
-                  {(userRole === "Administrador" ||
-                    userRole === "Propietario") && (
-                    <div className="relative">
+                  {editandoFecha ? (
+                    <>
+                      <Input
+                        type="date"
+                        value={nuevaFecha}
+                        onChange={(e) => setNuevaFecha(e.target.value)}
+                        className="w-40 h-8"
+                      />
+                      <Button
+                        size="sm"
+                        className="h-8 bg-green-600"
+                        onClick={() => {
+                          onUpdateFechaPesca(lote.id, nuevaFecha);
+                          setEditandoFecha(false);
+                        }}
+                      >
+                        <Check className="size-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setShowEstadoMenu((prev) => !prev)}
+                        className="h-8"
+                        onClick={() => {
+                          setNuevaFecha(lote.fecha_estimada_pesca);
+                          setEditandoFecha(false);
+                        }}
                       >
-                        Cambiar Estado
+                        <X className="size-4" />
                       </Button>
-
-                      {showEstadoMenu && (
-                        <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 w-48">
-                          {TODOS_LOS_ESTADOS.filter(
-                            (e) => e !== lote.estado
-                          ).map((estado) => (
-                            <button
-                              key={estado}
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `¿Cambiar estado a "${estado}"?`
-                                  )
-                                ) {
-                                  onUpdateEstado(lote.id, estado);
-                                  setShowEstadoMenu(false);
-                                }
-                              }}
-                              className="w-full text-left px-3 py-2 rounded hover:bg-gray-100"
-                            >
-                              {estado}
-                            </button>
-                          ))}
-                        </div>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {new Date(
+                          lote.fecha_estimada_pesca
+                        ).toLocaleDateString("es-ES")}
+                      </span>
+                      {(userRole === "Administrador" ||
+                        userRole === "Propietario") && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8"
+                          onClick={() => setEditandoFecha(true)}
+                        >
+                          <Edit2 className="size-4" />
+                        </Button>
                       )}
-                    </div>
+                    </>
                   )}
                 </div>
 
@@ -264,7 +240,6 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* ELIMINAR LOTE */}
             {userRole === "Administrador" && (
               <Button
                 size="sm"
@@ -272,7 +247,7 @@ export function Dashboard({
                 onClick={handleDelete}
                 className="flex items-center gap-1"
               >
-                <Trash2 className="size-4" /> Eliminar Lote
+                <Trash2 className="size-4" /> Eliminar
               </Button>
             )}
           </div>
@@ -317,22 +292,15 @@ export function Dashboard({
         {ventasPorProveedor.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Ventas por Proveedor (Libras)</CardTitle>
+              <CardTitle>Ventas por Proveedor</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={ventasPorProveedor}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="proveedor"
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
+                  <XAxis dataKey="proveedor" />
                   <YAxis />
-                  <Tooltip
-                    formatter={(value: number) => `${value.toFixed(2)} lb`}
-                  />
+                  <Tooltip />
                   <Bar dataKey="libras" fill="#0891b2" />
                 </BarChart>
               </ResponsiveContainer>
@@ -340,13 +308,10 @@ export function Dashboard({
           </Card>
         )}
 
-        {Number.isFinite(librasCosechadas) && librasCosechadas > 0 && (
+        {librasCosechadas > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Inventario Cosechado</CardTitle>
-              <p className="text-sm text-gray-500">
-                Total cosechado: {librasCosechadas.toFixed(2)} lb
-              </p>
+              <CardTitle>Inventario</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -355,20 +320,13 @@ export function Dashboard({
                     data={inventarioData}
                     dataKey="value"
                     nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(1)}%`
-                    }
                     outerRadius={80}
+                    label
                   >
-                    {inventarioData.map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    {inventarioData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    formatter={(value: number) => `${value.toFixed(2)} lb`}
-                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
