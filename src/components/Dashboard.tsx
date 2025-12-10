@@ -1,134 +1,173 @@
-import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "./components/ui/card";
-import { Button } from "./components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
-import { Input } from "./components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { LoteForm } from "./components/LoteForm";
+import { useState, useEffect, useRef } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { EstadoLote } from "../App";
 
-export default function Dashboard() {
-  const [lotes, setLotes] = useState([]);
-  const [selectedLote, setSelectedLote] = useState<string | null>(null);
-  const [filteredData, setFilteredData] = useState([]);
+interface LoteFormProps {
+  onSubmit: (loteData: {
+    nombre: string;
+    fecha_inicio: string;
+    fecha_estimada_pesca: string;
+    tipo_camaron: string;
+    estado: EstadoLote;
+    costo_produccion: number;
+  }) => void;
+}
 
+export function LoteForm({ onSubmit }: LoteFormProps) {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    fecha_inicio: new Date().toISOString().split("T")[0],
+    fecha_estimada_pesca: "",
+    tipo_camaron: "Vannamei",
+    estado: "Crianza" as EstadoLote,
+    costo_produccion: 0,
+  });
+
+  // 🔹 Para saber si el usuario editó la fecha manualmente
+  const fechaEditadaManualmente = useRef(false);
+
+  // 🔹 Recalcular fecha estimada SOLO si el usuario NO la editó a mano
   useEffect(() => {
-    if (selectedLote) {
-      const lote = lotes.find((l) => l.nombre === selectedLote);
-      setFilteredData(lote ? lote.historial || [] : []);
-    }
-  }, [selectedLote, lotes]);
+    if (fechaEditadaManualmente.current) return;
 
-  const handleCreateLote = (nuevoLote) => {
-    setLotes([...lotes, { ...nuevoLote, historial: [] }]);
+    const fecha = new Date(formData.fecha_inicio);
+    const estimada = new Date(fecha);
+    estimada.setDate(fecha.getDate() + 90);
+
+    setFormData((prev) => ({
+      ...prev,
+      fecha_estimada_pesca: estimada.toISOString().split("T")[0],
+    }));
+  }, [formData.fecha_inicio]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(formData);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-cyan-500">Dashboard General</h1>
+    <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* TARJETAS RESUMEN */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Lotes</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">{lotes.length}</CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Lotes Activos</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">
-            {lotes.filter((l) => l.estado === "Crianza").length}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Listos para Pescar</CardTitle>
-          </CardHeader>
-          <CardContent className="text-3xl font-bold">
-            {lotes.filter((l) => l.estado === "Listo para Pescar").length}
-          </CardContent>
-        </Card>
+      {/* Nombre */}
+      <div className="space-y-2">
+        <Label htmlFor="nombre">Nombre del Lote</Label>
+        <Input
+          id="nombre"
+          placeholder="Ej: Piscina Norte A"
+          value={formData.nombre}
+          onChange={(e) =>
+            setFormData({ ...formData, nombre: e.target.value })
+          }
+          required
+        />
       </div>
 
-      {/* FORMULARIO CREAR LOTE */}
-      <Card className="p-4">
-        <CardHeader>
-          <CardTitle>Crear Nuevo Lote</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <LoteForm onSubmit={handleCreateLote} />
-        </CardContent>
-      </Card>
+      {/* Fecha de inicio */}
+      <div className="space-y-2">
+        <Label htmlFor="fecha_inicio">Fecha de Inicio</Label>
+        <Input
+          id="fecha_inicio"
+          type="date"
+          value={formData.fecha_inicio}
+          onChange={(e) => {
+            fechaEditadaManualmente.current = false;
+            setFormData({ ...formData, fecha_inicio: e.target.value });
+          }}
+          required
+        />
+      </div>
 
-      {/* SELECCIÓN DE LOTE */}
-      <Card className="p-4">
-        <CardHeader>
-          <CardTitle>Seleccionar Lote</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select onValueChange={setSelectedLote}>
-            <SelectTrigger>
-              <SelectValue placeholder="Seleccione un lote" />
-            </SelectTrigger>
-            <SelectContent>
-              {lotes.map((l) => (
-                <SelectItem key={l.nombre} value={l.nombre}>
-                  {l.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {/* Fecha estimada de pesca */}
+      <div className="space-y-2">
+        <Label htmlFor="fecha_estimada_pesca">
+          Fecha Estimada de Pesca (+90 días)
+        </Label>
+        <Input
+          id="fecha_estimada_pesca"
+          type="date"
+          value={formData.fecha_estimada_pesca}
+          onChange={(e) => {
+            fechaEditadaManualmente.current = true; // Usuario modificó manualmente
+            setFormData({
+              ...formData,
+              fecha_estimada_pesca: e.target.value,
+            });
+          }}
+          required
+        />
+      </div>
 
-      {/* GRÁFICOS */}
-      <Tabs defaultValue="lineal" className="w-full">
-        <TabsList>
-          <TabsTrigger value="lineal">Crecimiento</TabsTrigger>
-          <TabsTrigger value="barras">Costos</TabsTrigger>
-        </TabsList>
+      {/* Tipo de camarón */}
+      <div className="space-y-2">
+        <Label>Tipo de Camarón</Label>
+        <Select
+          value={formData.tipo_camaron}
+          onValueChange={(value) =>
+            setFormData({ ...formData, tipo_camaron: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccione un tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Vannamei">Vannamei</SelectItem>
+            <SelectItem value="Litopenaeus">Litopenaeus</SelectItem>
+            <SelectItem value="Penaeus">Penaeus</SelectItem>
+            <SelectItem value="Macrobrachium">Macrobrachium</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* GRÁFICO LINEAL */}
-        <TabsContent value="lineal">
-          <Card className="p-4 h-[400px]">
-            <CardHeader>
-              <CardTitle>Historial de Crecimiento</CardTitle>
-            </CardHeader>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={filteredData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="fecha" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="peso_promedio" stroke="#0ea5e9" />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-        </TabsContent>
+      {/* Estado */}
+      <div className="space-y-2">
+        <Label>Estado Inicial</Label>
+        <Select
+          value={formData.estado}
+          onValueChange={(value: EstadoLote) =>
+            setFormData({ ...formData, estado: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccione un estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Crianza">Crianza</SelectItem>
+            <SelectItem value="Listo para Pescar">Listo para Pescar</SelectItem>
+            <SelectItem value="Reposo">Reposo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* GRÁFICO DE BARRAS */}
-        <TabsContent value="barras">
-          <Card className="p-4 h-[400px]">
-            <CardHeader>
-              <CardTitle>Costos de Producción</CardTitle>
-            </CardHeader>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={lotes}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="nombre" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="costo_produccion" fill="#06b6d4" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+      {/* Costo de producción */}
+      <div className="space-y-2">
+        <Label htmlFor="costo_produccion">Costo de Producción</Label>
+        <Input
+          id="costo_produccion"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="0.00"
+          value={formData.costo_produccion}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              costo_produccion: parseFloat(e.target.value) || 0,
+            })
+          }
+          required
+        />
+      </div>
+
+      <Button className="w-full bg-cyan-600">Crear Lote</Button>
+    </form>
   );
 }
