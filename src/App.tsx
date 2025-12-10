@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase } from "@/lib/supabase"; // ✅ IMPORTACIÓN CORREGIDA
 import AdministracionPanel from "./components/AdministracionPanel";
 
 export default function App() {
@@ -81,7 +81,6 @@ export default function App() {
           "postgres_changes",
           { event: "*", schema: "public", table: tableName },
           () => {
-            // Recargar solo la tabla afectada
             switch (tableName) {
               case "lotes":
                 fetchLotes();
@@ -116,7 +115,6 @@ export default function App() {
   // HANDLERS CRUD
   // -------------------------
 
-  // LOTES
   const createLote = async (data) => {
     await supabase.from("lotes").insert(data);
   };
@@ -129,7 +127,6 @@ export default function App() {
     await supabase.from("lotes").delete().eq("id", id);
   };
 
-  // COSECHAS
   const createCosecha = async (data) => {
     await supabase.from("cosechas").insert(data);
   };
@@ -142,7 +139,6 @@ export default function App() {
     await supabase.from("cosechas").delete().eq("id", id);
   };
 
-  // VENTAS
   const createVenta = async (data) => {
     await supabase.from("ventas").insert(data);
   };
@@ -155,7 +151,6 @@ export default function App() {
     await supabase.from("ventas").delete().eq("id", id);
   };
 
-  // PROVEEDORES
   const createProveedor = async (data) => {
     await supabase.from("proveedores").insert(data);
   };
@@ -168,7 +163,6 @@ export default function App() {
     await supabase.from("proveedores").delete().eq("id", id);
   };
 
-  // PESCADORES
   const createPescador = async (data) => {
     await supabase.from("pescadores").insert(data);
   };
@@ -181,7 +175,6 @@ export default function App() {
     await supabase.from("pescadores").delete().eq("id", id);
   };
 
-  // VENDEDORES
   const createVendedor = async (data) => {
     await supabase.from("vendedores").insert(data);
   };
