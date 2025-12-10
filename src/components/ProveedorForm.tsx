@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 
 interface ProveedorFormProps {
   initialData?: any;      // objeto proveedor para editar
-  onSubmit?: () => void;  // callback para recargar lista y cerrar modal, etc.
+  onSubmit?: () => void;  // callback para recargar lista en el padre
 }
 
 export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
@@ -34,35 +34,43 @@ export function ProveedorForm({ initialData, onSubmit }: ProveedorFormProps) {
           .from('proveedores')
           .update({
             nombre: formData.nombre,
-            contacts: formData.contacto, // 👈 se guarda en la columna "contacts"
+            contacto: formData.contacto, // ✅ Ahora el nombre coincide
             telefono: formData.telefono,
             email: formData.email,
             activo: formData.activo,
           })
-          .eq('id', initialData.id);
+          .eq('id', initialData.id)
+          .select(); // ✅ Devuelve la fila actualizada
       } else {
         // 🆕 CREAR nuevo proveedor
-        response = await supabase.from('proveedores').insert([
-          {
-            nombre: formData.nombre,
-            contacts: formData.contacto, // 👈 se guarda en "contacts"
-            telefono: formData.telefono,
-            email: formData.email,
-            activo: formData.activo,
-          },
-        ]);
+        response = await supabase
+          .from('proveedores')
+          .insert([
+            {
+              nombre: formData.nombre,
+              contacto: formData.contacto, // ✅ Campo correcto
+              telefono: formData.telefono,
+              email: formData.email,
+              activo: formData.activo,
+            },
+          ])
+          .select(); // ✅ Devuelve la fila insertada
       }
 
-      const { error } = response;
+      const { data, error } = response;
+
+      console.log("Supabase response:", { data, error });
 
       if (error) {
-        console.error('Error al guardar proveedor:', error);
-        alert('Error: ' + error.message);
+        console.error("Error al guardar proveedor:", error);
+        alert("Error: " + error.message);
         return;
       }
 
-      alert('Proveedor guardado correctamente.');
+      // 🟢 Notificar al padre para refrescar la lista
       onSubmit?.();
+
+      alert("Proveedor guardado correctamente.");
     } finally {
       setLoading(false);
     }
