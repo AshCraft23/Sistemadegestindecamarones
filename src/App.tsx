@@ -312,7 +312,6 @@ export default function App() {
       }))
     );
   };
-=======
   // FETCH COSECHAS
   // ====================
   const fetchCosechas = async () => {
