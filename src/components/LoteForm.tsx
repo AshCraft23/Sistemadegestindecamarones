@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -11,15 +11,7 @@ import {
 } from "./ui/select";
 import { EstadoLote } from "../App";
 
-interface LoteFormsProps {
-  initialData?: {
-    nombre: string;
-    fecha_inicio: string;
-    fecha_estimada_pesca: string;
-    tipo_camaron: string;
-    estado: EstadoLote;
-    costo_produccion: number;
-  };
+interface LoteFormProps {
   onSubmit: (loteData: {
     nombre: string;
     fecha_inicio: string;
@@ -30,35 +22,24 @@ interface LoteFormsProps {
   }) => void;
 }
 
-export function LoteForms({ initialData, onSubmit }: LoteFormsProps) {
-  const [formData, setFormData] = useState(() => ({
-    nombre: initialData?.nombre ?? "",
-    fecha_inicio:
-      initialData?.fecha_inicio ??
-      new Date().toISOString().split("T")[0],
-    fecha_estimada_pesca: initialData?.fecha_estimada_pesca ?? "",
-    tipo_camaron: initialData?.tipo_camaron ?? "Vannamei",
-    estado: initialData?.estado ?? ("Crianza" as EstadoLote),
-    costo_produccion: initialData?.costo_produccion ?? 0,
-  }));
+export function LoteForm({ onSubmit }: LoteFormProps) {
+  const [formData, setFormData] = useState({
+    nombre: "",
+    fecha_inicio: new Date().toISOString().split("T")[0],
+    fecha_estimada_pesca: "",
+    tipo_camaron: "Vannamei",
+    estado: "Crianza" as EstadoLote,
+    costo_produccion: 0,
+  });
 
-<<<<<<< HEAD
-  // Calcular fecha estimada de pesca = 90 días después
-=======
-  // 🔹 Para saber si el usuario editó la fecha estimada manualmente
-  const fechaEditadaManualmente = useRef(false);
-
-  // 🔹 Recalcular SOLO si el usuario no la editó
->>>>>>> d78c55243f30038ad9550db2f36ae5a9c147d70c
+  // Calcular fecha estimada (90 días después)
   useEffect(() => {
-    if (fechaEditadaManualmente.current) return;
-
     const fecha = new Date(formData.fecha_inicio);
     const estimada = new Date(fecha);
-    estimada.setDate(fecha.getDate() + 90);
+    estimada.setDate(estimada.getDate() + 90);
 
-    setFormData((prev) => ({
-      ...prev,
+    setFormData((f) => ({
+      ...f,
       fecha_estimada_pesca: estimada.toISOString().split("T")[0],
     }));
   }, [formData.fecha_inicio]);
@@ -70,73 +51,52 @@ export function LoteForms({ initialData, onSubmit }: LoteFormsProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-<<<<<<< HEAD
-=======
-
->>>>>>> d78c55243f30038ad9550db2f36ae5a9c147d70c
       {/* Nombre */}
       <div className="space-y-2">
         <Label htmlFor="nombre">Nombre del Lote</Label>
         <Input
           id="nombre"
-<<<<<<< HEAD
-=======
-          placeholder="Ej: Piscina A-1"
->>>>>>> d78c55243f30038ad9550db2f36ae5a9c147d70c
+          placeholder="Ej: Piscina Norte A"
           value={formData.nombre}
-          onChange={(e) =>
-            setFormData({ ...formData, nombre: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
           required
         />
       </div>
 
-      {/* Fecha inicio */}
+      {/* Fecha de inicio */}
       <div className="space-y-2">
         <Label htmlFor="fecha_inicio">Fecha de Inicio</Label>
         <Input
           id="fecha_inicio"
           type="date"
           value={formData.fecha_inicio}
-          onChange={(e) => {
-            fechaEditadaManualmente.current = false;
-            setFormData({ ...formData, fecha_inicio: e.target.value });
-          }}
+          onChange={(e) =>
+            setFormData({ ...formData, fecha_inicio: e.target.value })
+          }
           required
         />
       </div>
 
-<<<<<<< HEAD
-      {/* Fecha estimada pesca */}
-      <div className="space-y-2">
-        <Label htmlFor="fecha_estimada_pesca">Fecha Estimada de Pesca</Label>
-=======
       {/* Fecha estimada */}
       <div className="space-y-2">
-        <Label htmlFor="fecha_estimada_pesca">Fecha Estimada de Pesca (+90 días)</Label>
->>>>>>> d78c55243f30038ad9550db2f36ae5a9c147d70c
+        <Label htmlFor="fecha_estimada_pesca">
+          Fecha Estimada de Pesca (90 días)
+        </Label>
         <Input
           id="fecha_estimada_pesca"
           type="date"
           value={formData.fecha_estimada_pesca}
-<<<<<<< HEAD
           onChange={(e) =>
-            setFormData({ ...formData, fecha_estimada_pesca: e.target.value })
-          }
-=======
-          onChange={(e) => {
-            fechaEditadaManualmente.current = true; // Usuario editó manualmente
             setFormData({
               ...formData,
               fecha_estimada_pesca: e.target.value,
-            });
-          }}
->>>>>>> d78c55243f30038ad9550db2f36ae5a9c147d70c
+            })
+          }
           required
         />
       </div>
 
-      {/* Tipo de camaron */}
+      {/* Tipo camarón */}
       <div className="space-y-2">
         <Label>Tipo de Camarón</Label>
         <Select
@@ -146,7 +106,7 @@ export function LoteForms({ initialData, onSubmit }: LoteFormsProps) {
           }
         >
           <SelectTrigger>
-            <SelectValue placeholder="Seleccione" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Vannamei">Vannamei</SelectItem>
@@ -159,7 +119,7 @@ export function LoteForms({ initialData, onSubmit }: LoteFormsProps) {
 
       {/* Estado */}
       <div className="space-y-2">
-        <Label>Estado</Label>
+        <Label>Estado Inicial</Label>
         <Select
           value={formData.estado}
           onValueChange={(value: EstadoLote) =>
@@ -183,11 +143,9 @@ export function LoteForms({ initialData, onSubmit }: LoteFormsProps) {
         <Input
           id="costo_produccion"
           type="number"
-<<<<<<< HEAD
-=======
-          min={0}
+          min="0"
           step="0.01"
->>>>>>> d78c55243f30038ad9550db2f36ae5a9c147d70c
+          placeholder="0.00"
           value={formData.costo_produccion}
           onChange={(e) =>
             setFormData({
@@ -199,9 +157,7 @@ export function LoteForms({ initialData, onSubmit }: LoteFormsProps) {
         />
       </div>
 
-      <Button className="w-full bg-cyan-600">
-        {initialData ? "Actualizar Lote" : "Crear Lote"}
-      </Button>
+      <Button className="w-full bg-cyan-600">Crear Lote</Button>
     </form>
   );
 }
