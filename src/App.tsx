@@ -49,16 +49,16 @@ export type UserRole =
 
 export interface Usuario {
   id: string;
-  nombre: string;
+  nombre: string;      // mapea a "name"
   username: string;
+  email?: string;
   password: string;
-  rol: UserRole;
-  activo: boolean;
+  rol: UserRole;       // mapea a "role"
+  activo: boolean;     // mapea a "active"
 }
 
 // NOTA: este tipo mezcla lo que viene de la vista (snake_case)
-// y alias en camelCase / sin guión bajo para que los demás
-// componentes sigan funcionando aunque aún usen otros nombres.
+// y alias en camelCase / sin guión bajo para que otros componentes sigan funcionando.
 export interface Lote {
   id: string;
   nombre: string;
@@ -139,6 +139,7 @@ export default function App() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [pescadores, setPescadores] = useState<Pescador[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
 
   const [selectedLoteId, setSelectedLoteId] = useState<string | null>(null);
   const [showLoteForm, setShowLoteForm] = useState(false);
@@ -203,41 +204,43 @@ export default function App() {
   };
 
   // ====================
-// FETCH: VENTAS (CORREGIDO)
-// ====================
-const fetchVentas = async () => {
-  const { data, error } = await supabase
-    .from("ventas")
-    .select(`
-      id,
-      lote_id,
-      fecha,
-      libras,
-      precio_libra,
-      proveedor_nombre,
-      vendedor_nombre
-    `)
-    .order("fecha", { ascending: false });
+  // FETCH: VENTAS
+  // ====================
+  const fetchVentas = async () => {
+    const { data, error } = await supabase
+      .from("ventas")
+      .select(
+        `
+        id,
+        lote_id,
+        fecha,
+        libras,
+        precio_libra,
+        proveedor_nombre,
+        vendedor_nombre
+      `
+      )
+      .order("fecha", { ascending: false });
 
-  if (error) {
-    console.error("Error cargando ventas:", error);
-    setVentas([]); // evita que el dashboard crashee
-    return;
-  }
+    if (error) {
+      console.error("Error cargando ventas:", error);
+      setVentas([]);
+      return;
+    }
 
-  const mapped: Venta[] =
-    data?.map((row: any) => ({
-      id: row.id,
-      loteId: row.lote_id,
-      fecha: row.fecha,
-      libras: Number(row.libras) || 0,
-      precioLibra: Number(row.precio_libra) || 0,
-      proveedor: row.proveedor_nombre ?? "",
-      vendedor: row.vendedor_nombre ?? "",
-    })) ?? [];
+    const mapped: Venta[] =
+      data?.map((row: any) => ({
+        id: row.id,
+        loteId: row.lote_id,
+        fecha: row.fecha,
+        libras: Number(row.libras) || 0,
+        precioLibra: Number(row.precio_libra) || 0,
+        proveedor: row.proveedor_nombre ?? "",
+        vendedor: row.vendedor_nombre ?? "",
+      })) ?? [];
 
-  setVentas(mapped);
-};
+    setVentas(mapped);
+  };
 
   // ====================
   // FETCH: PROVEEDORES
@@ -316,6 +319,33 @@ const fetchVentas = async () => {
   };
 
   // ====================
+  // FETCH: USUARIOS (tabla users)
+  // ====================
+  const fetchUsuarios = async () => {
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, name, username, email, role, active")
+      .order("name");
+
+    if (error) {
+      console.error("Error cargando usuarios:", error);
+      return;
+    }
+
+    setUsuarios(
+      (data ?? []).map((u: any) => ({
+        id: u.id,
+        nombre: u.name,
+        username: u.username,
+        email: u.email ?? "",
+        password: "",
+        rol: u.role as UserRole,
+        activo: u.active ?? true,
+      }))
+    );
+  };
+
+  // ====================
   // FETCH ALL
   // ====================
   const fetchAll = async () => {
@@ -325,6 +355,7 @@ const fetchVentas = async () => {
       fetchProveedores(),
       fetchPescadores(),
       fetchVendedores(),
+      fetchUsuarios(),
     ]);
   };
 
@@ -341,6 +372,7 @@ const fetchVentas = async () => {
       "proveedores",
       "pescadores",
       "vendedores",
+      "users",
     ];
 
     const channels = tables.map((table) =>
@@ -369,6 +401,9 @@ const fetchVentas = async () => {
                 break;
               case "vendedores":
                 fetchVendedores();
+                break;
+              case "users":
+                fetchUsuarios();
                 break;
             }
           }
@@ -506,36 +541,32 @@ const fetchVentas = async () => {
   // VENTAS
   // ====================
   const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
-  const proveedorEncontrado = proveedores.find(
-    (p) => p.nombre === ventaData.proveedor
-  );
-  const vendedorEncontrado = vendedores.find(
-    (v) => v.nombre === ventaData.vendedor
-  );
+    const proveedorEncontrado = proveedores.find(
+      (p) => p.nombre === ventaData.proveedor
+    );
+    const vendedorEncontrado = vendedores.find(
+      (v) => v.nombre === ventaData.vendedor
+    );
 
-  const { error } = await supabase.from("ventas").insert({
-    lote_id: ventaData.loteId,
-    fecha: ventaData.fecha,
-    libras: ventaData.libras,
-    precio_libra: ventaData.precioLibra,
+    const { error } = await supabase.from("ventas").insert({
+      lote_id: ventaData.loteId,
+      fecha: ventaData.fecha,
+      libras: ventaData.libras,
+      precio_libra: ventaData.precioLibra,
+      proveedor_id: proveedorEncontrado?.id ?? null,
+      proveedor_nombre: ventaData.proveedor,
+      vendedor_id: vendedorEncontrado?.id ?? null,
+      vendedor_nombre: ventaData.vendedor,
+    });
 
-    // 🔥 COLUMNAS CORRECTAS
-    proveedor_id: proveedorEncontrado?.id ?? null,
-    proveedor_nombre: ventaData.proveedor,
+    if (error) {
+      alert("Error registrando venta: " + error.message);
+      return;
+    }
 
-    vendedor_id: vendedorEncontrado?.id ?? null,
-    vendedor_nombre: ventaData.vendedor,
-  });
-
-  if (error) {
-    alert("Error registrando venta: " + error.message);
-    return;
-  }
-
-  // Actualizamos tablas dependientes
-  await fetchVentas();
-  await fetchLotes();
-};
+    await fetchVentas();
+    await fetchLotes();
+  };
 
   // ====================
   // CRUD Proveedor / Pescador / Vendedor
@@ -589,6 +620,62 @@ const fetchVentas = async () => {
 
   const handleDeleteVendedor = async (id: string) => {
     await supabase.from("vendedores").delete().eq("id", id);
+  };
+
+  // ====================
+  // CRUD USUARIOS (tabla users)
+  // ====================
+  const handleCreateUsuario = async (data: Omit<Usuario, "id">) => {
+    const { error } = await supabase.from("users").insert({
+      name: data.nombre,
+      username: data.username,
+      email: data.email ?? "",
+      password: data.password,
+      role: data.rol,
+      active: data.activo,
+    });
+
+    if (error) {
+      alert("Error creando usuario: " + error.message);
+      return;
+    }
+
+    fetchUsuarios();
+  };
+
+  const handleUpdateUsuario = async (
+    id: string,
+    data: Omit<Usuario, "id">
+  ) => {
+    const { error } = await supabase
+      .from("users")
+      .update({
+        name: data.nombre,
+        username: data.username,
+        email: data.email ?? "",
+        password: data.password,
+        role: data.rol,
+        active: data.activo,
+      })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error actualizando usuario: " + error.message);
+      return;
+    }
+
+    fetchUsuarios();
+  };
+
+  const handleDeleteUsuario = async (id: string) => {
+    const { error } = await supabase.from("users").delete().eq("id", id);
+
+    if (error) {
+      alert("Error eliminando usuario: " + error.message);
+      return;
+    }
+
+    fetchUsuarios();
   };
 
   // ====================
@@ -852,6 +939,7 @@ const fetchVentas = async () => {
                 proveedores={proveedores}
                 pescadores={pescadores}
                 vendedores={vendedores}
+                usuarios={usuarios}
                 onCreateProveedor={handleCreateProveedor}
                 onUpdateProveedor={handleUpdateProveedor}
                 onDeleteProveedor={handleDeleteProveedor}
@@ -861,6 +949,9 @@ const fetchVentas = async () => {
                 onCreateVendedor={handleCreateVendedor}
                 onUpdateVendedor={handleUpdateVendedor}
                 onDeleteVendedor={handleDeleteVendedor}
+                onCreateUsuario={handleCreateUsuario}
+                onUpdateUsuario={handleUpdateUsuario}
+                onDeleteUsuario={handleDeleteUsuario}
                 userRole={currentUser.rol}
               />
             </TabsContent>
