@@ -23,24 +23,15 @@ import {
   Edit2,
   Check,
   X,
-  MoreVertical,
   Trash2,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+
 import { Lote, Venta, Cosecha, UserRole } from "../App";
 import { KPICard } from "./KPICard";
 import { TransactionTable } from "./TransactionTable";
 import { Badge } from "./ui/badge";
 import { useState } from "react";
 
-// Lista de estados posibles
 const TODOS_LOS_ESTADOS: Lote["estado"][] = [
   "Crianza",
   "Listo para Pescar",
@@ -48,16 +39,6 @@ const TODOS_LOS_ESTADOS: Lote["estado"][] = [
   "Reposo",
   "Descarte",
 ];
-
-interface DashboardProps {
-  lote: Lote | null;
-  ventas: Venta[];
-  cosechas: Cosecha[];
-  userRole: UserRole;
-  onUpdateEstado: (id: string, estado: Lote["estado"]) => void;
-  onUpdateFechaPesca: (id: string, nueva: string) => void;
-  onDeleteLote: (id: string) => void;
-}
 
 const COLORS = ["#0891b2", "#14b8a6"];
 
@@ -78,7 +59,6 @@ export function Dashboard({
   onUpdateFechaPesca,
   onDeleteLote,
 }: DashboardProps) {
-  // Si todavía no hay lote seleccionado
   if (!lote) {
     return (
       <div className="bg-white p-6 rounded shadow text-center text-gray-600">
@@ -87,7 +67,6 @@ export function Dashboard({
     );
   }
 
-  // Normalización de números
   const librasCosechadas = Number(
     lote.librascosechadas ?? lote.libras_cosechadas ?? 0
   );
@@ -107,7 +86,6 @@ export function Dashboard({
   const margenGanancia =
     costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
 
-  // Proteger ventas
   const ventasLista = Array.isArray(ventas) ? ventas : [];
 
   const ventasPorProveedor = ventasLista.reduce((acc, venta) => {
@@ -143,23 +121,25 @@ export function Dashboard({
   const [editandoFecha, setEditandoFecha] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
 
-  // Eliminar lote
+  // 🔥 NUEVO estado para el menú de cambiar estado
+  const [showEstadoMenu, setShowEstadoMenu] = useState(false);
+
   const handleDelete = () => {
     if (userRole !== "Administrador") {
       alert("Permiso denegado. Solo un Administrador puede eliminar lotes.");
       return;
     }
-    const confirmDelete = window.confirm(
-      `¡ATENCIÓN! Está a punto de eliminar el lote "${lote.nombre}" y TODAS sus transacciones (Cosechas y Ventas). Esta acción es irreversible. ¿Desea continuar?`
-    );
-    if (confirmDelete) {
+    if (
+      window.confirm(
+        `¡ATENCIÓN! Esto eliminará el lote "${lote.nombre}" y todas sus transacciones. ¿Continuar?`
+      )
+    ) {
       onDeleteLote(lote.id);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* HEADER DEL LOTE */}
       <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -181,60 +161,102 @@ export function Dashboard({
                   {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
-                {/* FECHA ESTIMADA DE PESCA */}
-                <div className="flex items-center gap-2">
-                  <Calendar className="size-4 text-cyan-600" />
+                {/* FECHA + BOTÓN CAMBIAR ESTADO */}
+                <div className="flex items-center gap-3 relative">
+                  {/* FECHA */}
+                  <div className="flex items-center gap-2">
+                    <Calendar className="size-4 text-cyan-600" />
 
-                  {editandoFecha ? (
-                    <>
-                      <Input
-                        type="date"
-                        value={nuevaFecha}
-                        onChange={(e) => setNuevaFecha(e.target.value)}
-                        className="w-40 h-8"
-                      />
-                      <Button
-                        size="sm"
-                        className="h-8 bg-green-600"
-                        onClick={() => {
-                          onUpdateFechaPesca(lote.id, nuevaFecha);
-                          setEditandoFecha(false);
-                        }}
-                      >
-                        <Check className="size-4" />
-                      </Button>
+                    {editandoFecha ? (
+                      <>
+                        <Input
+                          type="date"
+                          value={nuevaFecha}
+                          onChange={(e) => setNuevaFecha(e.target.value)}
+                          className="w-40 h-8"
+                        />
+                        <Button
+                          size="sm"
+                          className="h-8 bg-green-600"
+                          onClick={() => {
+                            onUpdateFechaPesca(lote.id, nuevaFecha);
+                            setEditandoFecha(false);
+                          }}
+                        >
+                          <Check className="size-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          onClick={() => {
+                            setNuevaFecha(lote.fecha_estimada_pesca);
+                            setEditandoFecha(false);
+                          }}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span>
+                          {new Date(
+                            lote.fecha_estimada_pesca
+                          ).toLocaleDateString("es-ES")}
+                        </span>
+
+                        {(userRole === "Administrador" ||
+                          userRole === "Propietario") && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => setEditandoFecha(true)}
+                          >
+                            <Edit2 className="size-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* BOTÓN CAMBIAR ESTADO */}
+                  {(userRole === "Administrador" ||
+                    userRole === "Propietario") && (
+                    <div className="relative">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8"
-                        onClick={() => {
-                          setNuevaFecha(lote.fecha_estimada_pesca);
-                          setEditandoFecha(false);
-                        }}
+                        onClick={() => setShowEstadoMenu((prev) => !prev)}
                       >
-                        <X className="size-4" />
+                        Cambiar Estado
                       </Button>
-                    </>
-                  ) : (
-                    <>
-                      <span>
-                        {new Date(
-                          lote.fecha_estimada_pesca
-                        ).toLocaleDateString("es-ES")}
-                      </span>
 
-                      {(userRole === "Administrador" ||
-                        userRole === "Propietario") && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setEditandoFecha(true)}
-                        >
-                          <Edit2 className="size-4" />
-                        </Button>
+                      {showEstadoMenu && (
+                        <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 w-48">
+                          {TODOS_LOS_ESTADOS.filter(
+                            (e) => e !== lote.estado
+                          ).map((estado) => (
+                            <button
+                              key={estado}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `¿Cambiar estado a "${estado}"?`
+                                  )
+                                ) {
+                                  onUpdateEstado(lote.id, estado);
+                                  setShowEstadoMenu(false);
+                                }
+                              }}
+                              className="w-full text-left px-3 py-2 rounded hover:bg-gray-100"
+                            >
+                              {estado}
+                            </button>
+                          ))}
+                        </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
 
@@ -242,54 +264,16 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* ACCIONES (Eliminar + Dropdown) */}
-            {(userRole === "Propietario" || userRole === "Administrador") && (
-              <div className="flex gap-2 items-center">
-                {/* Botón Eliminar (solo Admin) */}
-                {userRole === "Administrador" && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={handleDelete}
-                    className="flex items-center gap-1"
-                  >
-                    <Trash2 className="size-4" /> Eliminar Lote
-                  </Button>
-                )}
-
-                {/* Dropdown para cambiar estado */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <MoreVertical className="size-5" />
-                      <span className="sr-only">Abrir menú de estado</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Cambiar Estado a...</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {TODOS_LOS_ESTADOS.filter(
-                      (estado) => estado !== lote.estado
-                    ).map((estado) => (
-                      <DropdownMenuItem
-                        key={estado}
-                        onSelect={(e) => {
-                          e.preventDefault(); // por si acaso
-                          if (
-                            window.confirm(
-                              `¿Seguro que deseas cambiar el estado de "${lote.nombre}" a "${estado}"?`
-                            )
-                          ) {
-                            onUpdateEstado(lote.id, estado);
-                          }
-                        }}
-                      >
-                        {estado}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+            {/* ELIMINAR LOTE */}
+            {userRole === "Administrador" && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleDelete}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="size-4" /> Eliminar Lote
+              </Button>
             )}
           </div>
         </CardHeader>
@@ -330,7 +314,6 @@ export function Dashboard({
 
       {/* GRÁFICAS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ventas por proveedor */}
         {ventasPorProveedor.length > 0 && (
           <Card>
             <CardHeader>
@@ -357,7 +340,6 @@ export function Dashboard({
           </Card>
         )}
 
-        {/* Inventario */}
         {Number.isFinite(librasCosechadas) && librasCosechadas > 0 && (
           <Card>
             <CardHeader>
