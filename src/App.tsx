@@ -506,33 +506,36 @@ const fetchVentas = async () => {
   // VENTAS
   // ====================
   const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
-    const proveedorEncontrado = proveedores.find(
-      (p) => p.nombre === ventaData.proveedor
-    );
-    const vendedorEncontrado = vendedores.find(
-      (v) => v.nombre === ventaData.vendedor
-    );
+  const proveedorEncontrado = proveedores.find(
+    (p) => p.nombre === ventaData.proveedor
+  );
+  const vendedorEncontrado = vendedores.find(
+    (v) => v.nombre === ventaData.vendedor
+  );
 
-    const { error } = await supabase.from("ventas").insert({
-      lote_id: ventaData.loteId,
-      fecha: ventaData.fecha,
-      libras: ventaData.libras,
-      precio_libra: ventaData.precioLibra,
-      proveedor_id: proveedorEncontrado?.id ?? null,
-      proveedor_no: ventaData.proveedor,
-      vendedor_id: vendedorEncontrado?.id ?? null,
-      vendedor_nor: ventaData.vendedor,
-    });
+  const { error } = await supabase.from("ventas").insert({
+    lote_id: ventaData.loteId,
+    fecha: ventaData.fecha,
+    libras: ventaData.libras,
+    precio_libra: ventaData.precioLibra,
 
-    if (error) {
-      alert("Error registrando venta: " + error.message);
-      return;
-    }
+    // 🔥 COLUMNAS CORRECTAS
+    proveedor_id: proveedorEncontrado?.id ?? null,
+    proveedor_nombre: ventaData.proveedor,
 
-    // no tocamos la tabla lotes; la vista recalcula a partir de ventas
-    await fetchVentas();
-    await fetchLotes();
-  };
+    vendedor_id: vendedorEncontrado?.id ?? null,
+    vendedor_nombre: ventaData.vendedor,
+  });
+
+  if (error) {
+    alert("Error registrando venta: " + error.message);
+    return;
+  }
+
+  // Actualizamos tablas dependientes
+  await fetchVentas();
+  await fetchLotes();
+};
 
   // ====================
   // CRUD Proveedor / Pescador / Vendedor
