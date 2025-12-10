@@ -866,3 +866,8 @@ export default function App() {
     </div>
   );
 }
+      </Tabs>
+      </main>
+    </div>
+  );
+}
