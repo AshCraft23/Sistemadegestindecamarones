@@ -143,38 +143,39 @@ export default function App() {
   // FETCH: LOTES
   // ====================
   const fetchLotes = async () => {
-    const { data, error } = await supabase
-      .from("lotes")
-      .select(
-        "id, nombre, fecha_inicio, fecha_estimada_pesca, tipo_camaron, estado, librascosechadas, librasvendidas, costo_produccion, ingresostotales"
-      )
-      .order("fecha_inicio", { ascending: false });
+  const { data, error } = await supabase
+    .from("lotes_dashboard_view") // 🚀 usamos la vista que ya calcula totales
+    .select("*")
+    .order("fecha_inicio", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando lotes:", error);
-      return;
-    }
+  if (error) {
+    console.error("Error cargando lotes:", error);
+    return;
+  }
 
-    const mapped: Lote[] =
-      data?.map((row: any) => ({
-        id: row.id,
-        nombre: row.nombre,
-        fecha_inicio: row.fecha_inicio,
-        fecha_estimada_pesca: row.fecha_estimada_pesca,
-        tipo_camaron: row.tipo_camaron,
-        estado: row.estado as EstadoLote,
-        librascosechadas: row.librascosechadas ?? 0,
-        librasvendidas: row.librasvendidas ?? 0,
-        costo_produccion: row.costo_produccion ?? 0,
-        ingresostotales: row.ingresostotales ?? 0,
-      })) ?? [];
+  const mapped: Lote[] =
+    data?.map((row: any) => ({
+      id: row.id,
+      nombre: row.nombre,
+      fecha_inicio: row.fecha_inicio,
+      fecha_estimada_pesca: row.fecha_estimada_pesca,
+      tipo_camaron: row.tipo_camaron,
+      estado: row.estado,
 
-    setLotes(mapped);
+      // ✔ valores calculados por la vista
+      librascosechadas: row.libras_cosechadas ?? 0,
+      librasvendidas: row.libras_vendidas ?? 0,
+      ingresostotales: row.ingresos_totales ?? 0,
 
-    if (!selectedLoteId && mapped.length > 0) {
-      setSelectedLoteId(mapped[0].id);
-    }
-  };
+      costo_produccion: row.costo_produccion ?? 0,
+    })) ?? [];
+
+  setLotes(mapped);
+
+  if (!selectedLoteId && mapped.length > 0) {
+    setSelectedLoteId(mapped[0].id);
+  }
+};
 
   // ====================
   // FETCH: VENTAS
