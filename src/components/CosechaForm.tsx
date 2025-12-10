@@ -1,14 +1,41 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { AlertCircle } from "lucide-react";
+import { Lote, Pescador } from "../App";
+
+interface CosechaFormProps {
+  lotes: Lote[];
+  pescadores: Pescador[];
+  pescadorId: string; // ahora recibimos el ID del pescador autenticado
+  onSubmit: (data: {
+    loteId: string;
+    fecha: string;
+    libras: number;
+    pescador_id: string;
+  }) => void;
+}
+
 export function CosechaForm({
   lotes,
   pescadores,
-  pescadorNombre,
+  pescadorId,
   onSubmit,
 }: CosechaFormProps) {
   const [formData, setFormData] = useState({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
-    pescadorId: "",        // ✔️ Guardaremos el ID real
+    pescador_id: pescadorId,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,18 +51,13 @@ export function CosechaForm({
       return;
     }
 
-    if (!formData.pescadorId) {
-      alert("Debes seleccionar un pescador.");
-      return;
-    }
-
     onSubmit(formData);
 
     setFormData({
       loteId: "",
       fecha: new Date().toISOString().split("T")[0],
       libras: 0,
-      pescadorId: "",
+      pescador_id: pescadorId,
     });
   };
 
@@ -47,7 +69,7 @@ export function CosechaForm({
             <AlertCircle className="size-5" />
             <p>
               No hay lotes disponibles para cosecha.  
-              Solo los lotes con estado **"Listo para Pescar"** pueden cosecharse.
+              Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.
             </p>
           </div>
         </CardContent>
@@ -63,13 +85,14 @@ export function CosechaForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-
           {/* LOTE */}
-          <div>
+          <div className="space-y-2">
             <Label>Lote</Label>
             <Select
               value={formData.loteId}
-              onValueChange={(v) => setFormData({ ...formData, loteId: v })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, loteId: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar lote" />
@@ -85,7 +108,7 @@ export function CosechaForm({
           </div>
 
           {/* FECHA */}
-          <div>
+          <div className="space-y-2">
             <Label>Fecha</Label>
             <Input
               type="date"
@@ -97,13 +120,13 @@ export function CosechaForm({
           </div>
 
           {/* LIBRAS */}
-          <div>
+          <div className="space-y-2">
             <Label>Libras cosechadas</Label>
             <Input
               type="number"
-              step="0.01"
               min="0.01"
-              value={formData.libras}
+              step="0.01"
+              value={formData.libras || ""}
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -114,16 +137,16 @@ export function CosechaForm({
           </div>
 
           {/* PESCADOR */}
-          <div>
+          <div className="space-y-2">
             <Label>Pescador</Label>
             <Select
-              value={formData.pescadorId}
-              onValueChange={(v) =>
-                setFormData({ ...formData, pescadorId: v })
+              value={formData.pescador_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, pescador_id: value })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar pescador" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {pescadores.map((p) => (
@@ -135,7 +158,7 @@ export function CosechaForm({
             </Select>
           </div>
 
-          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white">
+          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white hover:from-cyan-700 hover:to-teal-700">
             Registrar Cosecha
           </Button>
         </form>

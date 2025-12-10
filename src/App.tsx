@@ -56,9 +56,7 @@ export interface Usuario {
   activo: boolean;
 }
 
-// NOTA: este tipo mezcla lo que viene de la vista (snake_case)
-// y alias en camelCase / sin guión bajo para que los demás
-// componentes sigan funcionando aunque aún usen otros nombres.
+
 export interface Lote {
   id: string;
   nombre: string;
@@ -316,6 +314,31 @@ const fetchVentas = async () => {
   };
 
   // ====================
+  // FETCH COSECHAS
+  // ====================
+  const fetchCosechas = async () => {
+  const { data, error } = await supabase
+    .from("cosechas")
+    .select("id, lote_id, fecha, libras, pescador_nombre")
+    .order("fecha", { ascending: false });
+
+  if (error) {
+    console.error("Error cargando cosechas:", error);
+    return;
+  }
+
+  const mapped: Cosecha[] = (data ?? []).map((row: any) => ({
+    id: row.id,
+    loteId: row.lote_id,
+    fecha: row.fecha,
+    libras: Number(row.libras) || 0,
+    pescador: row.pescador_nombre ?? "",
+  }));
+
+  setCosechas(mapped);
+};
+
+  // ====================
   // FETCH ALL
   // ====================
   const fetchAll = async () => {
@@ -325,7 +348,9 @@ const fetchVentas = async () => {
       fetchProveedores(),
       fetchPescadores(),
       fetchVendedores(),
+      fetchCosechas(), // ← NECESARIO
     ]);
+
   };
 
   // ====================
@@ -359,7 +384,8 @@ const fetchVentas = async () => {
                 fetchLotes(); // para refrescar totales de la vista
                 break;
               case "cosechas":
-                fetchLotes(); // la vista usa cosechas
+                  fetchCosechas();
+                fetchLotes();
                 break;
               case "proveedores":
                 fetchProveedores();
