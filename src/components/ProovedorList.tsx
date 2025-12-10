@@ -12,15 +12,25 @@ export default function ProovedorList() {
   // 🔥 Cargar datos desde Supabase
   const fetchProveedores = async () => {
     const { data, error } = await supabase
-      .from("contacts")
-      .select("*");
+      .from("proveedores")
+      .select("id, nombre, contacts, telefono, email, activo");
 
     if (error) {
       console.error("Error cargando proveedores:", error);
       return;
     }
 
-    setProveedores(data);
+    // 🔥 Mapear contacts → contacto
+    const mapped = data.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      contacto: p.contacts,   // ← CORRECCIÓN
+      telefono: p.telefono,
+      email: p.email,
+      activo: p.activo,
+    }));
+
+    setProveedores(mapped);
   };
 
   useEffect(() => {
@@ -30,12 +40,12 @@ export default function ProovedorList() {
   // 🔥 Crear proveedor
   const handleCreate = async (nuevo: Omit<Proveedor, "id">) => {
     const { error } = await supabase
-      .from("contacts")
+      .from("proveedores")
       .insert({
         nombre: nuevo.nombre,
         telefono: nuevo.telefono,
         email: nuevo.email,
-        contacto: nuevo.contacto,
+        contacts: nuevo.contacto, // ← CORRECCIÓN
         activo: nuevo.activo,
       });
 
@@ -50,12 +60,12 @@ export default function ProovedorList() {
   // 🔥 Editar proveedor
   const handleEdit = async (id: string, data: Omit<Proveedor, "id">) => {
     const { error } = await supabase
-      .from("contacts")
+      .from("proveedores")
       .update({
         nombre: data.nombre,
         telefono: data.telefono,
         email: data.email,
-        contacto: data.contacto,
+        contacts: data.contacto, // ← CORRECCIÓN
         activo: data.activo,
       })
       .eq("id", id);
@@ -72,7 +82,7 @@ export default function ProovedorList() {
   // 🔥 Borrar proveedor
   const handleDelete = async (id: string) => {
     const { error } = await supabase
-      .from("contacts")
+      .from("proveedores")
       .delete()
       .eq("id", id);
 

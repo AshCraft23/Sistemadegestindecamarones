@@ -12,7 +12,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export interface Proveedor {
-  id: string;           // UUID real de Supabase
+  id: string;       // UUID real generado por Supabase
   nombre: string;
   contacto: string;
   telefono: string;
@@ -23,7 +23,7 @@ export interface Proveedor {
 interface ProveedorTableProps {
   proveedores: Proveedor[];
   onEdit: (proveedor: Proveedor) => void;
-  onRefresh: () => void;   // Para recargar datos luego de eliminar
+  onRefresh: () => void; // refresca la lista después de eliminar
 }
 
 export function ProveedorTable({
@@ -31,14 +31,14 @@ export function ProveedorTable({
   onEdit,
   onRefresh,
 }: ProveedorTableProps) {
-
+  
+  // ✅ ELIMINAR usando el UUID real
   const handleDelete = async (id: string, nombre: string) => {
     const ok = confirm(`¿Está seguro de eliminar a ${nombre}?`);
     if (!ok) return;
 
-    // ⚠️ TABLA CORRECTA: "contacts"
     const { error } = await supabase
-      .from('contacts')
+      .from('proveedores')   // <-- NOMBRE CORRECTO DE LA TABLA
       .delete()
       .eq('id', id);
 
@@ -49,7 +49,7 @@ export function ProveedorTable({
     }
 
     alert('Proveedor eliminado correctamente.');
-    onRefresh(); // recargar lista en el front
+    onRefresh();
   };
 
   if (proveedores.length === 0) {
@@ -98,6 +98,8 @@ export function ProveedorTable({
 
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
+                  
+                  {/* EDITAR */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -106,6 +108,7 @@ export function ProveedorTable({
                     <Pencil className="size-4" />
                   </Button>
 
+                  {/* ELIMINAR */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -113,6 +116,7 @@ export function ProveedorTable({
                   >
                     <Trash2 className="size-4 text-red-600" />
                   </Button>
+
                 </div>
               </TableCell>
 
