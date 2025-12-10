@@ -569,20 +569,11 @@ export default function App() {
     await fetchLotes();
   };
 
-  // ====================
-  // VENTAS
-  // ====================
-  // ====================
+
+// ====================
 // VENTAS (CORREGIDO)
 // ====================
-const handleRegistrarVenta = async (ventaData: {
-  lote_id: string;
-  fecha: string;
-  libras: number;
-  precio_libra: number;
-  proveedor: string;
-  vendedor: string;
-}) => {
+const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
   console.log("DATA DE VENTA RECIBIDA:", ventaData);
 
   const proveedorEncontrado = proveedores.find(
@@ -593,21 +584,20 @@ const handleRegistrarVenta = async (ventaData: {
     (v) => v.nombre === ventaData.vendedor
   );
 
-  // ⚠️ Validación: vendedor debe existir
   if (!vendedorEncontrado) {
     alert("Error: El vendedor seleccionado no existe.");
     return;
   }
 
   const { error } = await supabase.from("ventas").insert({
-    lote_id: ventaData.lote_id,
+    lote_id: ventaData.loteId,
     fecha: ventaData.fecha,
     libras: ventaData.libras,
-    precio_libra: ventaData.precio_libra,
+    precio_libra: ventaData.precioLibra,
     proveedor_id: proveedorEncontrado?.id ?? null,
     proveedor_nombre: ventaData.proveedor,
-    vendedor_id: vendedorEncontrado.id, // ✅ UUID real
-    vendedor_nombre: vendedorEncontrado.nombre, // evitar valores vacíos
+    vendedor_id: vendedorEncontrado.id,
+    vendedor_nombre: vendedorEncontrado.nombre,
   });
 
   if (error) {
@@ -619,7 +609,6 @@ const handleRegistrarVenta = async (ventaData: {
   fetchVentas();
   fetchLotes();
 };
-
 
   // ====================
   // CRUD Proveedor / Pescador / Vendedor
