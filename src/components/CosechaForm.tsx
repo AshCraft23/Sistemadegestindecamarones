@@ -20,7 +20,7 @@ interface CosechaFormProps {
   onSubmit: (data: {
     loteId: string;
     fecha: string;
-    libras: number;
+    libras_cosechadas: number;
     pescador_id: string;
   }) => void;
 }
@@ -34,7 +34,7 @@ export function CosechaForm({
   const [formData, setFormData] = useState({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
-    libras: 0,
+    libras: 0, // Se mantiene como estado interno
     pescador_id: pescadorId,
   });
 
@@ -52,8 +52,10 @@ export function CosechaForm({
     }
 
     onSubmit({
-      ...formData,
-      libras: Number(formData.libras),
+      loteId: formData.loteId,
+      fecha: formData.fecha,
+      libras_cosechadas: Number(formData.libras), // ← CAMBIADO AQUÍ
+      pescador_id: formData.pescador_id,
     });
 
     setFormData({
