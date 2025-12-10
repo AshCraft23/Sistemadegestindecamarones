@@ -67,19 +67,23 @@ export function Dashboard({
   const ventasSeguras = Array.isArray(ventas) ? ventas : [];
   const cosechasSeguras = Array.isArray(cosechas) ? cosechas : [];
 
-  // Normalización de lote (evita undefined en cálculos)
-  const librasCosechadas = Number(lote.librascosechadas ?? lote.libras_cosechadas ?? 0);
-  const librasVendidas = Number(lote.librasvendidas ?? lote.libras_vendidas ?? 0);
-  const costoProduccion = Number(lote.costo_produccion ?? 0);
-  const ingresosTotales = Number(lote.ingresostotales ?? lote.ingresos_totales ?? 0);
+   // Normalización de lote (evita undefined en cálculos)
+    const librasCosechadas = cosechasSeguras
+  .filter(c => c.lote_id === lote.id)
+  .reduce((sum, c) => sum + Number(c.libras || 0), 0);
 
-  const librasDisponibles = Math.max(librasCosechadas - librasVendidas, 0);
+    const libras_vendidas = Number(lote.libras_vendidas ?? 0);
+    const costoProduccion = Number(lote.costo_produccion ?? 0);
+    const ingresosTotales = Number(lote.ingresos_totales ?? 0);
 
-  const gananciaBruta = ingresosTotales - costoProduccion;
-  const porcentajeVendido =
-    librasCosechadas > 0 ? (librasVendidas / librasCosechadas) * 100 : 0;
-  const margenGanancia =
-    costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
+    const librasDisponibles = Math.max(librasCosechadas - libras_vendidas, 0);
+
+    const gananciaBruta = ingresosTotales - costoProduccion;
+    const porcentajeVendido =
+      librasCosechadas > 0 ? (libras_vendidas / librasCosechadas) * 100 : 0;
+    const margenGanancia =
+      costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
+
 
   // Agrupación segura
   const ventasPorProveedor = ventasSeguras.reduce((acc, venta) => {
@@ -105,7 +109,7 @@ export function Dashboard({
 
   // Inventario para gráfico Pie
   const inventarioData = [
-    { name: "Vendido", value: librasVendidas },
+    { name: "Vendido", value: libras_vendidas },
     { name: "Disponible", value: librasDisponibles }
   ];
 

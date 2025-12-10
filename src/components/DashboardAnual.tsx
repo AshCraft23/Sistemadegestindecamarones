@@ -55,12 +55,12 @@ export function DashboardAnual({ lotes, ventas }: DashboardAnualProps) {
       return mesVenta === mes;
     });
     
-    const librasVendidas = ventasMes.reduce((sum, v) => sum + v.libras, 0);
+    const libras_vendidas = ventasMes.reduce((sum, v) => sum + v.libras, 0);
     const ingresos = ventasMes.reduce((sum, v) => sum + (v.libras * v.precioLibra), 0);
     
     return {
       mes: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][i],
-      libras: librasVendidas,
+      libras: libras_vendidas,
       ingresos: ingresos
     };
   });
