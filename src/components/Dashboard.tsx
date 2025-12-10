@@ -20,7 +20,6 @@ import {
   TrendingUp,
   Percent,
   Weight,
-  AlertCircle,
   Edit2,
   Check,
   X
@@ -32,7 +31,7 @@ import { Badge } from "./ui/badge";
 import { useState } from "react";
 
 interface DashboardProps {
-  lote: Lote;
+  lote: Lote | null;
   ventas: Venta[];
   cosechas: Cosecha[];
   userRole: UserRole;
@@ -58,15 +57,25 @@ export function Dashboard({
   onUpdateEstado,
   onUpdateFechaPesca
 }: DashboardProps) {
-  const [editandoFecha, setEditandoFecha] = useState(false);
-  const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
 
-  // Normalización para evitar undefined
-  const librasCosechadas = Number(lote.librascosechadas) || 0;
-  const librasVendidas = Number(lote.librasvendidas) || 0;
-  const costoProduccion = Number(lote.costo_produccion) || 0;
-  const ingresosTotales = Number(lote.ingresostotales) || 0;
+  // ============================================
+  // 🧨 SI LOTE ES NULL, NO RENDERIZAR DASHBOARD
+  // ============================================
+  if (!lote) {
+    return (
+      <div className="bg-white p-6 rounded shadow text-center text-gray-600">
+        Cargando información del lote…
+      </div>
+    );
+  }
 
+  // Normalización FIJA Y SEGURA
+  const librasCosechadas = Number(lote.librascosechadas ?? lote.libras_cosechadas ?? 0);
+  const librasVendidas = Number(lote.librasvendidas ?? lote.libras_vendidas ?? 0);
+  const costoProduccion = Number(lote.costo_produccion ?? 0);
+  const ingresosTotales = Number(lote.ingresostotales ?? lote.ingresos_totales ?? 0);
+
+  // Proteger inventario y gráficas
   const librasDisponibles = Math.max(librasCosechadas - librasVendidas, 0);
 
   const gananciaBruta = ingresosTotales - costoProduccion;
@@ -75,7 +84,9 @@ export function Dashboard({
   const margenGanancia =
     costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
 
-  // Protección contra ventas undefined
+  // ============================================
+  // 🔒 Proteger ventas: evitar undefined / null
+  // ============================================
   const ventasLista = Array.isArray(ventas) ? ventas : [];
 
   const ventasPorProveedor = ventasLista.reduce((acc, venta) => {
@@ -94,10 +105,12 @@ export function Dashboard({
         ingresos: libras * precio
       });
     }
-
     return acc;
   }, [] as Array<{ proveedor: string; libras: number; ingresos: number }>);
 
+  // ============================================
+  // ✔ Inventario protegido
+  // ============================================
   const inventarioData = [
     { name: "Vendido", value: librasVendidas },
     { name: "Disponible", value: librasDisponibles }
@@ -109,9 +122,13 @@ export function Dashboard({
     (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24)
   );
 
+  const [editandoFecha, setEditandoFecha] = useState(false);
+  const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
+
   return (
     <div className="space-y-6">
-      {/* HEADER */}
+
+      {/* HEADER DEL LOTE */}
       <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -125,14 +142,14 @@ export function Dashboard({
 
               <div className="flex items-center gap-6 text-sm text-gray-600">
                 <span>ID: {lote.id}</span>
+
                 <span>Tipo: {lote.tipo_camaron}</span>
 
                 <span>
-                  Inicio:{" "}
-                  {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
+                  Inicio: {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
-                {/* Fecha estimada pesca */}
+                {/* FECHA ESTIMADA DE PESCA */}
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
 
@@ -168,9 +185,9 @@ export function Dashboard({
                   ) : (
                     <>
                       <span>
-                        {new Date(
-                          lote.fecha_estimada_pesca
-                        ).toLocaleDateString("es-ES")}
+                        {new Date(lote.fecha_estimada_pesca).toLocaleDateString(
+                          "es-ES"
+                        )}
                       </span>
 
                       {userRole === "Administrador" && (
@@ -190,7 +207,7 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* BOTONES DE ESTADO */}
+            {/* ACCIONES */}
             {userRole === "Propietario" && (
               <div className="flex gap-2">
                 {lote.estado === "Crianza" && (
@@ -232,7 +249,7 @@ export function Dashboard({
           title="Ganancia Bruta"
           value={`$${gananciaBruta.toFixed(2)}`}
           icon={<DollarSign />}
-          trend={gananciaBruta > 0 ? "up" : "neutral"}
+          trend={gananciaBruta >= 0 ? "up" : "down"}
           bgColor="from-green-500 to-emerald-500"
         />
 
@@ -255,13 +272,14 @@ export function Dashboard({
           title="Margen de Ganancia"
           value={`${margenGanancia.toFixed(1)}%`}
           icon={<TrendingUp />}
-          trend="neutral"
           bgColor="from-blue-500 to-indigo-500"
         />
       </div>
 
       {/* GRÁFICAS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Ventas por proveedor */}
         {ventasPorProveedor.length > 0 && (
           <Card>
             <CardHeader>
@@ -286,7 +304,8 @@ export function Dashboard({
           </Card>
         )}
 
-        {librasCosechadas > 0 && (
+        {/* Inventario */}
+        {Number.isFinite(librasCosechadas) && librasCosechadas > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Inventario</CardTitle>
@@ -315,7 +334,7 @@ export function Dashboard({
         )}
       </div>
 
-      {/* TABLA */}
+      {/* HISTORIAL */}
       <Card>
         <CardHeader>
           <CardTitle>Historial de Transacciones</CardTitle>
