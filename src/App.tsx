@@ -124,10 +124,6 @@ export interface Vendedor {
 export default function App() {
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const handleCreateUsuario = (data: Omit<Usuario, "id">) => { ... }
-  const handleUpdateUsuario = (id: string, data: Omit<Usuario, "id">) => { ... }
-  const handleDeleteUsuario = (id: string) => { ... }
-
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [cosechas, setCosechas] = useState<Cosecha[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
