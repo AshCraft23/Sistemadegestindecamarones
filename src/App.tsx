@@ -349,29 +349,70 @@ export default function App() {
   ======================================================= */
 
   const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
-    const lote = lotes.find((l) => l.id === ventaData.loteId);
+  const lote = lotes.find((l) => l.id === ventaData.loteId);
 
-    await supabase.from("ventas").insert({
-      lote_id: ventaData.loteId,
-      fecha: ventaData.fecha,
-      libras: ventaData.libras,
-      precio_libra: ventaData.precioLibra,
-      proveedor_nombre: ventaData.proveedor,
-      vendedor_nombre: ventaData.vendedor,
-    });
-  };
+  const proveedorEncontrado = proveedores.find(
+    (p) => p.nombre === ventaData.proveedor
+  );
 
-  /* =======================================================
-     INTERFAZ
-  ======================================================= */
+  const vendedorEncontrado = vendedores.find(
+    (v) => v.nombre === ventaData.vendedor
+  );
 
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoginForm onLogin={handleLogin} />
-      </div>
-    );
+  // 👇 Insert correcto según tu tabla REAL
+  const { error } = await supabase.from("ventas").insert({
+    lote_id: ventaData.loteId,
+    fecha: ventaData.fecha,
+    libras: ventaData.libras,
+    precio_libra: ventaData.precioLibra,
+
+    proveedor_id: proveedorEncontrado?.id ?? null,
+    proveedor_no: ventaData.proveedor,   // 👈 coincide con tu DB
+
+    vendedor_id: vendedorEncontrado?.id ?? null,
+    vendedor_nor: ventaData.vendedor,    // 👈 coincide con tu DB
+  });
+
+  if (error) {
+    console.error(error);
+    alert("Error registrando venta: " + error.message);
+    return;
   }
+
+  // --- ACTUALIZAR LOTE ---
+  const nuevasLibrasVendidas =
+    (lote?.librasvendidas ?? 0) + ventaData.libras;
+
+  const nuevosIngresos =
+    (lote?.ingresostotales ?? 0) +
+    ventaData.libras * ventaData.precioLibra;
+
+  const { error: errorLote } = await supabase
+    .from("lotes")
+    .update({
+      librasvendidas: nuevasLibrasVendidas,
+      ingresostotales: nuevosIngresos,
+    })
+    .eq("id", ventaData.loteId);
+
+  if (errorLote) {
+    alert("Error actualizando lote después de la venta: " + errorLote.message);
+    return;
+  }
+
+  // actualizar UI
+  setLotes((prev) =>
+    prev.map((l) =>
+      l.id === ventaData.loteId
+        ? {
+            ...l,
+            librasvendidas: nuevasLibrasVendidas,
+            ingresostotales: nuevosIngresos,
+          }
+        : l
+    )
+  );
+};
 
   /* ====================
       VISTA GENERAL
