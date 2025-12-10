@@ -17,22 +17,34 @@ const estadoColors: Record<EstadoLote, string> = {
   Descarte: "bg-red-100 text-red-800 border-red-200",
 };
 
-export function LotesList({
-  lotes,
-  onSelectLote,
-  selectedLoteId,
-}: LotesListProps) {
+export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {lotes.map((lote) => {
         const isSelected = lote.id === selectedLoteId;
 
-        // ✔ nombres EXACTOS desde Supabase
-        const librasDisponibles =
-          (lote.librascosechadas ?? 0) - (lote.librasvendidas ?? 0);
+        // ✔ Compatibilidad con BD normalizada y con la nueva vista
+        const librasCosechadas =
+          lote.librascosechadas ??
+          lote.libras_cosechadas ??
+          0;
 
-        const gananciaBruta =
-          (lote.ingresostotales ?? 0) - (lote.costo_produccion ?? 0);
+        const librasVendidas =
+          lote.librasvendidas ??
+          lote.libras_vendidas ??
+          0;
+
+        const ingresosTotales =
+          lote.ingresostotales ??
+          lote.ingresos_totales ??
+          0;
+
+        const costoProduccion =
+          lote.costo_produccion ?? 0;
+
+        // ✔ Calculos correctos
+        const librasDisponibles = librasCosechadas - librasVendidas;
+        const gananciaBruta = ingresosTotales - costoProduccion;
 
         return (
           <Card
@@ -43,6 +55,7 @@ export function LotesList({
             onClick={() => onSelectLote(lote.id)}
           >
             <CardContent className="p-6">
+              {/* Encabezado */}
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-gray-900 mb-1">{lote.nombre}</h3>
@@ -54,6 +67,7 @@ export function LotesList({
                 </Badge>
               </div>
 
+              {/* Datos */}
               <div className="space-y-3">
                 {/* Tipo de camarón */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -61,37 +75,40 @@ export function LotesList({
                   <span>{lote.tipo_camaron}</span>
                 </div>
 
-                {/* Fechas */}
+                {/* Fecha de inicio */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-cyan-600" />
                   <span>
                     Inicio:{" "}
-                    {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
+                    {lote.fecha_inicio
+                      ? new Date(lote.fecha_inicio).toLocaleDateString("es-ES")
+                      : "—"}
                   </span>
                 </div>
 
+                {/* Fecha estimada de pesca */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-teal-600" />
                   <span>
                     Est. Pesca:{" "}
-                    {new Date(
-                      lote.fecha_estimada_pesca
-                    ).toLocaleDateString("es-ES")}
+                    {lote.fecha_estimada_pesca
+                      ? new Date(lote.fecha_estimada_pesca).toLocaleDateString("es-ES")
+                      : "—"}
                   </span>
                 </div>
 
-                {/* Datos financieros */}
+                {/* Bloque financiero */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Cosechado:</span>
-                    <span>{Number(lote.librascosechadas).toFixed(2)} lb</span>
+                    <span>{librasCosechadas.toFixed(2)} lb</span>
                   </div>
 
-                  {lote.librascosechadas > 0 && (
+                  {librasCosechadas > 0 && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Vendido:</span>
-                        <span>{Number(lote.librasvendidas).toFixed(2)} lb</span>
+                        <span>{librasVendidas.toFixed(2)} lb</span>
                       </div>
 
                       <div className="flex justify-between text-sm">
@@ -107,9 +124,7 @@ export function LotesList({
                     <span className="text-gray-600">Ganancia:</span>
                     <span
                       className={
-                        gananciaBruta >= 0
-                          ? "text-green-600"
-                          : "text-red-600"
+                        gananciaBruta >= 0 ? "text-green-600" : "text-red-600"
                       }
                     >
                       ${gananciaBruta.toLocaleString("es-ES")}

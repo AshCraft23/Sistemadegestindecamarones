@@ -14,35 +14,35 @@ import { EstadoLote } from "../App";
 interface LoteFormProps {
   onSubmit: (loteData: {
     nombre: string;
-    fechaInicio: string;
-    fechaEstimadaPesca: string;
-    tipoCamaron: string;
+    fecha_inicio: string;
+    fecha_estimada_pesca: string;
+    tipo_camaron: string;
     estado: EstadoLote;
-    costoProduccion: number;
+    costo_produccion: number;
   }) => void;
 }
 
 export function LoteForm({ onSubmit }: LoteFormProps) {
   const [formData, setFormData] = useState({
     nombre: "",
-    fechaInicio: new Date().toISOString().split("T")[0],
-    fechaEstimadaPesca: "",
-    tipoCamaron: "Vannamei",
+    fecha_inicio: new Date().toISOString().split("T")[0],
+    fecha_estimada_pesca: "",
+    tipo_camaron: "Vannamei",
     estado: "Crianza" as EstadoLote,
-    costoProduccion: 0,
+    costo_produccion: 0,
   });
 
   // 🧮 Calcular fecha estimada de pesca = 90 días después
   useEffect(() => {
-    const fecha = new Date(formData.fechaInicio);
+    const fecha = new Date(formData.fecha_inicio);
     const estimada = new Date(fecha);
     estimada.setDate(fecha.getDate() + 90);
 
     setFormData((f) => ({
       ...f,
-      fechaEstimadaPesca: estimada.toISOString().split("T")[0],
+      fecha_estimada_pesca: estimada.toISOString().split("T")[0],
     }));
-  }, [formData.fechaInicio]);
+  }, [formData.fecha_inicio]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +51,7 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      
       {/* Nombre */}
       <div className="space-y-2">
         <Label htmlFor="nombre">Nombre del Lote</Label>
@@ -63,43 +64,46 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         />
       </div>
 
-      {/* Fecha inicio */}
+      {/* Fecha de inicio */}
       <div className="space-y-2">
-        <Label htmlFor="fechaInicio">Fecha de Inicio</Label>
+        <Label htmlFor="fecha_inicio">Fecha de Inicio</Label>
         <Input
-          id="fechaInicio"
+          id="fecha_inicio"
           type="date"
-          value={formData.fechaInicio}
+          value={formData.fecha_inicio}
           onChange={(e) =>
-            setFormData({ ...formData, fechaInicio: e.target.value })
+            setFormData({ ...formData, fecha_inicio: e.target.value })
           }
           required
         />
       </div>
 
-      {/* Fecha estimada pesca */}
+      {/* Fecha estimada de pesca */}
       <div className="space-y-2">
-        <Label htmlFor="fechaEstimadaPesca">
+        <Label htmlFor="fecha_estimada_pesca">
           Fecha Estimada de Pesca (90 días)
         </Label>
         <Input
-          id="fechaEstimadaPesca"
+          id="fecha_estimada_pesca"
           type="date"
-          value={formData.fechaEstimadaPesca}
+          value={formData.fecha_estimada_pesca}
           onChange={(e) =>
-            setFormData({ ...formData, fechaEstimadaPesca: e.target.value })
+            setFormData({
+              ...formData,
+              fecha_estimada_pesca: e.target.value,
+            })
           }
           required
         />
       </div>
 
-      {/* Tipo camaron */}
+      {/* Tipo de camarón */}
       <div className="space-y-2">
         <Label>Tipo de Camarón</Label>
         <Select
-          value={formData.tipoCamaron}
+          value={formData.tipo_camaron}
           onValueChange={(value) =>
-            setFormData({ ...formData, tipoCamaron: value })
+            setFormData({ ...formData, tipo_camaron: value })
           }
         >
           <SelectTrigger>
@@ -134,20 +138,20 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         </Select>
       </div>
 
-      {/* Costo */}
+      {/* Costo de producción */}
       <div className="space-y-2">
-        <Label htmlFor="costoProduccion">Costo de Producción</Label>
+        <Label htmlFor="costo_produccion">Costo de Producción</Label>
         <Input
-          id="costoProduccion"
+          id="costo_produccion"
           type="number"
           min="0"
           step="0.01"
           placeholder="0.00"
-          value={formData.costoProduccion}
+          value={formData.costo_produccion}
           onChange={(e) =>
             setFormData({
               ...formData,
-              costoProduccion: parseFloat(e.target.value) || 0,
+              costo_produccion: parseFloat(e.target.value) || 0,
             })
           }
           required

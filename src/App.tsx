@@ -362,26 +362,31 @@ export default function App() {
   // ====================
   // CRUD LOTES
   // ====================
-  const handleCreateLote = async (loteData: LoteCreatePayload) => {
-    const { error } = await supabase.from("lotes").insert({
-      nombre: loteData.nombre,
-      fecha_inicio: loteData.fecha_inicio,
-      fecha_estimada_pesca: loteData.fecha_estimada_pesca,
-      tipo_camaron: loteData.tipo_camaron,
-      estado: loteData.estado,
-      librascosechadas: 0,
-      librasvendidas: 0,
-      costo_produccion: loteData.costo_produccion,
-      ingresostotales: 0,
-    });
+  const handleCreateLote = async (loteData: {
+  nombre: string;
+  fecha_inicio: string;
+  fecha_estimada_pesca: string;
+  tipo_camaron: string;
+  estado: EstadoLote;
+  costo_produccion: number;
+}) => {
 
-    if (error) {
-      alert("Error creando lote: " + error.message);
-      return;
-    }
+  const { error } = await supabase.from("lotes").insert({
+    nombre: loteData.nombre,
+    fecha_inicio: loteData.fecha_inicio,
+    fecha_estimada_pesca: loteData.fecha_estimada_pesca,
+    tipo_camaron: loteData.tipo_camaron,
+    estado: loteData.estado,
+    costo_produccion: loteData.costo_produccion
+  });
 
-    setShowLoteForm(false);
-  };
+  if (error) {
+    alert("Error creando lote: " + error.message);
+    return;
+  }
+
+  setShowLoteForm(false);
+};
 
   const handleUpdateLoteEstado = async (
     loteId: string,
