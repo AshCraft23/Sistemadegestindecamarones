@@ -1,8 +1,17 @@
 
-  # Sistema de Gestión de Camarones
+  # Sistema de Gestión de Camarones - GELCA
 
-  This is a code bundle for Sistema de Gestión de Camarones. The original project is available at https://www.figma.com/design/KS9ri8UPGmu24dxmHFNd0D/Sistema-de-Gesti%C3%B3n-de-Camarones.
+  Proyecto Final de Ingieneria de Software 2
 
+El proposito de este software es que sirva de gestión y dashboard para organizar inventario y ganancias de una granja de Camarones.
+
+## Frontend
+React + Vite
+
+## Backend
+PostgreSQL
+
+  
   ## Running the code
 
   Run `npm i` to install the dependencies.
