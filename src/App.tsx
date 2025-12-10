@@ -521,13 +521,14 @@ const handleDeleteLote = async (loteId: string) => {
   const { data, error } = await supabase
   .from("cosechas")
   .insert({
-    lote_id: data.loteId,
-    fecha: data.fecha,
-    libras: data.libras,
-    pescador_id: data.pescador_id,
+    lote_id: cosechaData.loteId,
+    fecha: cosechaData.fecha,
+    libras: cosechaData.libras,
+    pescador_id: cosechaData.pescador_id,
     pescador_nombre: pescador?.nombre ?? null
-  });
-    .select();   // ❗ importante: no uses `.single()`
+  })
+  .select();   // ← esto va pegado a insert(), NO va en una nueva línea aislada
+
 
   if (error) {
     console.error("Supabase error:", error);
