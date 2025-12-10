@@ -49,6 +49,7 @@ export function UsuariosPanel({
 }: UsuariosPanelProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+
   const [formData, setFormData] = useState<Omit<Usuario, "id">>({
     nombre: "",
     username: "",
@@ -61,7 +62,6 @@ export function UsuariosPanel({
     {}
   );
 
-  // === SUBMIT ===
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -83,31 +83,32 @@ export function UsuariosPanel({
     });
   };
 
-  const startEdit = (u: Usuario) => {
-    setEditingUser(u);
+  const startEdit = (user: Usuario) => {
+    setEditingUser(user);
     setFormData({
-      nombre: u.nombre,
-      username: u.username,
-      password: u.password,
-      rol: u.rol,
-      activo: u.activo,
+      nombre: user.nombre,
+      username: user.username,
+      password: user.password,
+      rol: user.rol,
+      activo: user.activo,
     });
     setShowForm(true);
   };
 
-  const togglePass = (id: string) =>
-    setShowPasswords((p) => ({ ...p, [id]: !p[id] }));
+  const togglePassword = (id: string) => {
+    setShowPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const rolColors: Record<UserRole, string> = {
-    Administrador: "bg-purple-100 text-purple-800",
-    Propietario: "bg-blue-100 text-blue-800",
-    Vendedor: "bg-green-100 text-green-800",
-    Pescador: "bg-cyan-100 text-cyan-800",
+    Administrador: "bg-purple-100 text-purple-800 border-purple-200",
+    Propietario: "bg-blue-100 text-blue-800 border-blue-200",
+    Vendedor: "bg-green-100 text-green-800 border-green-200",
+    Pescador: "bg-cyan-100 text-cyan-800 border-cyan-200",
   };
 
   return (
     <div className="space-y-6">
-      {/* Botón Nuevo Usuario */}
+      {/* Botón Crear */}
       <div className="flex justify-end">
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
@@ -125,9 +126,8 @@ export function UsuariosPanel({
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nombre */}
               <div>
-                <Label>Nombre</Label>
+                <Label>Nombre Completo</Label>
                 <Input
                   value={formData.nombre}
                   onChange={(e) =>
@@ -137,7 +137,6 @@ export function UsuariosPanel({
                 />
               </div>
 
-              {/* Usuario */}
               <div>
                 <Label>Usuario</Label>
                 <Input
@@ -149,7 +148,6 @@ export function UsuariosPanel({
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <Label>Contraseña</Label>
                 <Input
@@ -162,7 +160,6 @@ export function UsuariosPanel({
                 />
               </div>
 
-              {/* Rol */}
               <div>
                 <Label>Rol</Label>
                 <Select
@@ -175,7 +172,9 @@ export function UsuariosPanel({
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Administrador">Administrador</SelectItem>
+                    <SelectItem value="Administrador">
+                      Administrador
+                    </SelectItem>
                     <SelectItem value="Propietario">Propietario</SelectItem>
                     <SelectItem value="Vendedor">Vendedor</SelectItem>
                     <SelectItem value="Pescador">Pescador</SelectItem>
@@ -183,7 +182,6 @@ export function UsuariosPanel({
                 </Select>
               </div>
 
-              {/* Activo */}
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -192,7 +190,7 @@ export function UsuariosPanel({
                     setFormData({ ...formData, activo: e.target.checked })
                   }
                 />
-                <Label>Activo</Label>
+                <Label>Usuario activo</Label>
               </div>
 
               <Button type="submit" className="w-full">
@@ -203,7 +201,7 @@ export function UsuariosPanel({
         </Dialog>
       </div>
 
-      {/* Tabla Usuarios */}
+      {/* Tabla */}
       <Card>
         <CardHeader>
           <CardTitle>Usuarios Registrados</CardTitle>
@@ -224,21 +222,27 @@ export function UsuariosPanel({
             </TableHeader>
 
             <TableBody>
-              {usuarios.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>{u.id}</TableCell>
-                  <TableCell>{u.nombre}</TableCell>
-                  <TableCell>{u.username}</TableCell>
+              {usuarios.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.id}</TableCell>
+                  <TableCell>{user.nombre}</TableCell>
+                  <TableCell>{user.username}</TableCell>
 
-                  {/* Password con ocultar/mostrar */}
+                  {/* Contraseña */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span className="font-mono">
-                        {showPasswords[u.id] ? u.password : "••••••••"}
+                        {showPasswords[user.id]
+                          ? user.password
+                          : "••••••••"}
                       </span>
 
-                      <Button variant="ghost" size="sm" onClick={() => togglePass(u.id)}>
-                        {showPasswords[u.id] ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => togglePassword(user.id)}
+                      >
+                        {showPasswords[user.id] ? (
                           <EyeOff className="w-4" />
                         ) : (
                           <Eye className="w-4" />
@@ -248,39 +252,47 @@ export function UsuariosPanel({
                   </TableCell>
 
                   <TableCell>
-                    <Badge className={rolColors[u.rol]}>{u.rol}</Badge>
+                    <Badge className={rolColors[user.rol]}>
+                      {user.rol}
+                    </Badge>
                   </TableCell>
 
                   <TableCell>
                     <Badge
                       className={
-                        u.activo
+                        user.activo
                           ? "bg-green-100 text-green-800"
                           : "bg-gray-200 text-gray-800"
                       }
                     >
-                      {u.activo ? "Activo" : "Inactivo"}
+                      {user.activo ? "Activo" : "Inactivo"}
                     </Badge>
                   </TableCell>
 
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => startEdit(u)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEdit(user)}
+                      >
                         <Edit2 className="w-4" />
                       </Button>
 
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => onDeleteUsuario(u.id)}
+                        onClick={() => onDeleteUsuario(user.id)}
                       >
                         <Trash2 className="w-4" />
                       </Button>
                     </div>
                   </TableCell>
+
                 </TableRow>
               ))}
             </TableBody>
+
           </Table>
         </CardContent>
       </Card>
