@@ -300,3 +300,6 @@ export function AdministracionPanel({
     </div>
   );
 }
+
+// EXPORT DEFAULT AÑADIDO (OPCIÓN 1)
+export default AdministracionPanel;
