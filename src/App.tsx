@@ -138,11 +138,11 @@ export default function App() {
   const selectedLote = lotes.find((l) => l.id === selectedLoteId) || null;
 
   // ====================
-  // FETCH: LOTES  (vista lotes_dashboard_view)
+  // FETCH: LOTES  (vista lotes_dashboard)
   // ====================
   const fetchLotes = async () => {
     const { data, error } = await supabase
-      .from("lotes_dashboard_view")
+      .from("lotes_dashboard")
       .select("*")
       .order("fecha_inicio", { ascending: false });
 
