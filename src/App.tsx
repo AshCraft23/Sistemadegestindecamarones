@@ -134,7 +134,7 @@ export default function App() {
     const { data, error } = await supabase
       .from("lotes")
       .select(
-        "id, nombre, fecha_inicio, fecha_estimada_pesca, tipo_camaron, estado, libras_cosechadas, libras_vendidas, costo_produccion, ingresos_totales"
+        "id, nombre, fecha_inicio, fecha_estimada_pesca, tipo_camaron, estado, librascosechadas, librasvendidas, costo_produccion, ingresostotales"
       )
       .order("fecha_inicio", { ascending: false });
 
@@ -151,8 +151,8 @@ export default function App() {
         fechaEstimadaPesca: row.fecha_estimada_pesca,
         tipoCamaron: row.tipo_camaron,
         estado: row.estado as EstadoLote,
-        librasCosechadas: row.libras_cosechadas ?? 0,
-        librasVendidas: row.libras_vendidas ?? 0,
+        librasCosechadas: row.librascosechadas ?? 0,
+        librasVendidas: row.librasvendidas ?? 0,
         costoProduccion: row.costo_produccion ?? 0,
         ingresostotales: row.ingresostotales ?? 0,
       })) ?? [];
@@ -354,18 +354,16 @@ export default function App() {
     "id" | "librasCosechadas" | "librasVendidas" | "ingresosTotales"
   >
 ) => {
-  const { error } = await supabase.from("lotes").insert({
+    const { error } = await supabase.from("lotes").insert({
     nombre: loteData.nombre,
     fecha_inicio: loteData.fechaInicio,
     fecha_estimada_pesca: loteData.fechaEstimadaPesca,
     tipo_camaron: loteData.tipoCamaron,
     estado: loteData.estado,
-
-    // NOMBRES EXACTOS SEGÚN TU TABLA
     librascosechadas: 0,
     librasvendidas: 0,
     costo_produccion: loteData.costoProduccion,
-    ingresostotales: 0,
+    ingresostotales: 0,   // ✅ NOMBRE REAL EN BD
   });
 
   if (error) {
