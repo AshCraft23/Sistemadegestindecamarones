@@ -12,6 +12,7 @@ import {
 } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { Usuario, UserRole } from "../App";
+import React from "react"; // Necesario para el tipado de eventos
 
 interface UsuariosPanelProps {
   usuarios: Usuario[];
@@ -49,9 +50,6 @@ export function UsuariosPanel({
     }
 
     if (editId) {
-      // Nota: Aquí, si no se cambia la contraseña, idealmente no se debería enviar el hash
-      // o se debería manejar el caso de actualización de contraseña por separado en la lógica de Supabase/Backend.
-      // Por ahora, usamos el valor que tenga el estado.
       onUpdateUsuario(editId, formData);
       setEditId(null);
     } else {
@@ -62,7 +60,7 @@ export function UsuariosPanel({
     setFormData({
       nombre: "",
       username: "",
-      password: "", // Es importante limpiar la contraseña
+      password: "", 
       rol: "Vendedor",
       activo: true,
     });
@@ -73,10 +71,6 @@ export function UsuariosPanel({
     setFormData({
       nombre: usuario.nombre,
       username: usuario.username,
-      // NOTA: No se debe precargar el password real aquí por seguridad.
-      // Lo establecemos como vacío para forzar al usuario a ingresar uno nuevo
-      // si desea actualizarlo, o enviamos un valor vacío si el backend
-      // está configurado para ignorar el campo si está vacío en una actualización.
       password: "", 
       rol: usuario.rol,
       activo: usuario.activo,
@@ -94,6 +88,13 @@ export function UsuariosPanel({
     });
   };
 
+  // Función genérica para manejar los cambios de Input y tipado seguro
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { id, value } = e.target;
+      setFormData({ ...formData, [id]: value });
+  };
+
+
   return (
     <div className="space-y-8">
       <Card>
@@ -105,15 +106,14 @@ export function UsuariosPanel({
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            
             {/* Nombre */}
             <div>
               <Label htmlFor="nombre">Nombre</Label>
               <Input
-                id="nombre"
+                id="nombre" // ¡Importante tener el ID para el handler genérico!
                 value={formData.nombre}
-                onChange={(e) =>
-                  setFormData({ ...formData, nombre: e.target.value })
-                }
+                onChange={handleInputChange} // Usando el handler genérico y tipado
                 required
               />
             </div>
@@ -122,11 +122,9 @@ export function UsuariosPanel({
             <div>
               <Label htmlFor="username">Usuario (Username/Email)</Label>
               <Input
-                id="username"
+                id="username" // ¡Importante tener el ID!
                 value={formData.username}
-                onChange={(e) =>
-                  setFormData({ ...formData, username: e.target.value })
-                }
+                onChange={handleInputChange} // Usando el handler genérico y tipado
                 required
               />
             </div>
@@ -135,17 +133,15 @@ export function UsuariosPanel({
             <div>
               <Label htmlFor="password">Password {editId ? "(Dejar vacío para no cambiar)" : ""}</Label>
               <Input
-                id="password"
+                id="password" // ¡Importante tener el ID!
                 type="password"
                 value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                required={!editId} // Requerido solo al crear
+                onChange={handleInputChange} // Usando el handler genérico y tipado
+                required={!editId} 
               />
             </div>
 
-            {/* Rol (Campo insertado y corregido) */}
+            {/* Rol (Select) */}
             <div className="space-y-1"> 
               <Label htmlFor="rol-select">Rol</Label>
               <Select
@@ -167,7 +163,7 @@ export function UsuariosPanel({
               </Select>
             </div>
 
-            {/* Activo */}
+            {/* Activo (Switch) */}
             <div className="flex items-center gap-2 pt-2">
               <Switch
                 id="activo"
@@ -203,14 +199,15 @@ export function UsuariosPanel({
         </CardHeader>
 
         <CardContent>
+          {/* Aquí se asegura de que 'usuarios' sea un array antes de usar length o map */}
           <div className="space-y-2">
-            {usuarios.length === 0 && (
+            {(!usuarios || usuarios.length === 0) && (
               <p className="text-gray-500 text-center">
                 No hay usuarios registrados
               </p>
             )}
 
-            {usuarios.map((u) => (
+            {usuarios && Array.isArray(usuarios) && usuarios.map((u) => (
               <div
                 key={u.id}
                 className="flex justify-between items-center border rounded-md p-3 bg-white hover:shadow-md transition-shadow"
@@ -232,7 +229,7 @@ export function UsuariosPanel({
                   <Button
                     variant="outline"
                     onClick={() => startEdit(u)}
-                    disabled={editId !== null} // Deshabilitar si ya se está editando otro
+                    disabled={editId !== null} 
                   >
                     Editar
                   </Button>
