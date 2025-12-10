@@ -154,7 +154,7 @@ export default function App() {
         librasCosechadas: row.libras_cosechadas ?? 0,
         librasVendidas: row.libras_vendidas ?? 0,
         costoProduccion: row.costo_produccion ?? 0,
-        ingresosTotales: row.ingresos_totales ?? 0,
+        ingresostotales: row.ingresostotales ?? 0,
       })) ?? [];
 
     setLotes(mapped);
@@ -351,7 +351,7 @@ export default function App() {
   const handleCreateLote = async (
     loteData: Omit<
       Lote,
-      "id" | "librasCosechadas" | "librasVendidas" | "ingresosTotales"
+      "id" | "librasCosechadas" | "librasVendidas" | "ingresostotales"
     >
   ) => {
     const { error } = await supabase.from("lotes").insert({

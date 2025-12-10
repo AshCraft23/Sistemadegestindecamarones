@@ -10,11 +10,11 @@ interface LotesListProps {
 }
 
 const estadoColors: Record<EstadoLote, string> = {
-  'Crianza': 'bg-blue-100 text-blue-800 border-blue-200',
+  Crianza: 'bg-blue-100 text-blue-800 border-blue-200',
   'Listo para Pescar': 'bg-green-100 text-green-800 border-green-200',
   'En Venta': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-  'Reposo': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  'Descarte': 'bg-red-100 text-red-800 border-red-200'
+  Reposo: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  Descarte: 'bg-red-100 text-red-800 border-red-200',
 };
 
 export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProps) {
@@ -23,7 +23,6 @@ export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProp
       {lotes.map((lote) => {
         const isSelected = lote.id === selectedLoteId;
 
-        // 🔥 Variables REALMENTE existentes en Lote (según App.tsx)
         const librasDisponibles = lote.librasCosechadas - lote.librasVendidas;
         const gananciaBruta = lote.ingresosTotales - lote.costoProduccion;
 
@@ -41,34 +40,31 @@ export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProp
                   <h3 className="text-gray-900 mb-1">{lote.nombre}</h3>
                   <p className="text-sm text-gray-500">{lote.id}</p>
                 </div>
-                <Badge className={estadoColors[lote.estado]}>
-                  {lote.estado}
-                </Badge>
+                <Badge className={estadoColors[lote.estado]}>{lote.estado}</Badge>
               </div>
 
               <div className="space-y-3">
-                {/* Tipo de camarón */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Fish className="size-4 text-cyan-600" />
                   <span>{lote.tipoCamaron}</span>
                 </div>
 
-                {/* Fechas */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-cyan-600" />
                   <span>
-                    Inicio: {new Date(lote.fechaInicio).toLocaleDateString('es-ES')}
+                    Inicio:{' '}
+                    {new Date(lote.fechaInicio).toLocaleDateString('es-ES')}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-teal-600" />
                   <span>
-                    Est. Pesca: {new Date(lote.fechaEstimadaPesca).toLocaleDateString('es-ES')}
+                    Est. Pesca:{' '}
+                    {new Date(lote.fechaEstimadaPesca).toLocaleDateString('es-ES')}
                   </span>
                 </div>
 
-                {/* Datos financieros */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Cosechado:</span>
