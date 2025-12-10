@@ -1,143 +1,84 @@
-// src/components/Dashboard.tsx
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Legend
-} from 'recharts';
-import { TrendingUp, DollarSign, Package, BarChart3 } from 'lucide-react';
-import { KPICard } from './KPICard';
-import { useState, useMemo } from 'react';
-import { Lote, Venta } from '../types';
+import { useState, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
+import { Input } from "./components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LoteForm } from "./components/LoteForm";
 
-interface DashboardProps {
-  lotes: Lote[];
-  ventas: Venta[];
-}
+export default function Dashboard() {
+  const [lotes, setLotes] = useState([]);
+  const [selectedLote, setSelectedLote] = useState<string | null>(null);
+  const [filteredData, setFilteredData] = useState([]);
 
-export default function Dashboard({ lotes, ventas }: DashboardProps) {
-
-  // -------------------------------------------------------------
-  // AÑOS DISPONIBLES
-  // -------------------------------------------------------------
-  const añosDisponibles = useMemo(() => {
-    const años = new Set<number>();
-    ventas.forEach(v => años.add(new Date(v.fecha).getFullYear()));
-    años.add(new Date().getFullYear());
-    return Array.from(años).sort((a, b) => b - a);
-  }, [ventas]);
-
-  const [añoSeleccionado, setAñoSeleccionado] = useState(
-    añosDisponibles[0] ?? new Date().getFullYear()
-  );
-
-  // -------------------------------------------------------------
-  // VENTAS DEL AÑO SELECCIONADO
-  // -------------------------------------------------------------
-  const ventasDelAño = useMemo(() => {
-    return ventas.filter(
-      v => new Date(v.fecha).getFullYear() === añoSeleccionado
-    );
-  }, [ventas, añoSeleccionado]);
-
-  // -------------------------------------------------------------
-  // COSTOS DEL AÑO (si Lote.fecha no existe → calcula todos)
-  // -------------------------------------------------------------
-  const costosTotal = useMemo(() => {
-    const tieneFecha = lotes.length > 0 && "fecha" in lotes[0];
-    if (tieneFecha) {
-      return lotes
-        .filter(l => new Date((l as any).fecha).getFullYear() === añoSeleccionado)
-        .reduce((sum, l) => sum + l.costoProduccion, 0);
+  useEffect(() => {
+    if (selectedLote) {
+      const lote = lotes.find((l) => l.nombre === selectedLote);
+      setFilteredData(lote ? lote.historial || [] : []);
     }
-    return lotes.reduce((sum, l) => sum + l.costoProduccion, 0);
-  }, [lotes, añoSeleccionado]);
+  }, [selectedLote, lotes]);
 
-  // -------------------------------------------------------------
-  // KPIs
-  // -------------------------------------------------------------
-  const ingresosTotal = useMemo(() => {
-    return ventasDelAño.reduce(
-      (sum, v) => sum + v.libras * v.precioLibra,
-      0
-    );
-  }, [ventasDelAño]);
+  const handleCreateLote = (nuevoLote) => {
+    setLotes([...lotes, { ...nuevoLote, historial: [] }]);
+  };
 
-  const gananciaTotal = useMemo(() => ingresosTotal - costosTotal, [ingresosTotal, costosTotal]);
-
-  const margenGanancia = useMemo(() => {
-    return costosTotal > 0 ? (gananciaTotal / costosTotal) * 100 : 0;
-  }, [gananciaTotal, costosTotal]);
-
-  // -------------------------------------------------------------
-  // VENTAS POR MES (ya optimizado)
-  // -------------------------------------------------------------
-  const ventasPorMes = useMemo(() => {
-    return Array.from({ length: 12 }, (_, i) => {
-      const ventasMes = ventasDelAño.filter(v =>
-        new Date(v.fecha).getMonth() === i
-      );
-      return {
-        mes: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][i],
-        libras: ventasMes.reduce((s, v) => s + v.libras, 0),
-        ingresos: ventasMes.reduce((s, v) => s + v.libras * v.precioLibra, 0)
-      };
-    });
-  }, [ventasDelAño]);
-
-  // -------------------------------------------------------------
-  // TOP 10 LOTES (optimizado)
-  // -------------------------------------------------------------
-  const rankingLotes = useMemo(() => {
-    return lotes
-      .map(l => ({
-        nombre: l.nombre,
-        ingresos: l.ingresosTotales ?? 0,
-        costos: l.costoProduccion,
-        ganancia: (l.ingresosTotales ?? 0) - l.costoProduccion
-      }))
-      .sort((a, b) => b.ganancia - a.ganancia)
-      .slice(0, 10);
-  }, [lotes]);
-
-  // -------------------------------------------------------------
-  // UI
-  // -------------------------------------------------------------
   return (
-    <div className="space-y-6 p-4">
+    <div className="p-6 space-y-6">
+      <h1 className="text-3xl font-bold text-cyan-500">Dashboard General</h1>
 
-      {/* Header */}
-      <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
+      {/* TARJETAS RESUMEN */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Lotes</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold">{lotes.length}</CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Lotes Activos</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold">
+            {lotes.filter((l) => l.estado === "Crianza").length}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Listos para Pescar</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold">
+            {lotes.filter((l) => l.estado === "Listo para Pescar").length}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* FORMULARIO CREAR LOTE */}
+      <Card className="p-4">
         <CardHeader>
-          <CardTitle className="text-cyan-900">Dashboard Anual {añoSeleccionado}</CardTitle>
-          <p className="text-sm text-gray-600">Resumen financiero general</p>
+          <CardTitle>Crear Nuevo Lote</CardTitle>
         </CardHeader>
+        <CardContent>
+          <LoteForm onSubmit={handleCreateLote} />
+        </CardContent>
       </Card>
 
-      {/* Selector Año */}
-      <Card>
-        <CardHeader><CardTitle>Seleccionar Año</CardTitle></CardHeader>
+      {/* SELECCIÓN DE LOTE */}
+      <Card className="p-4">
+        <CardHeader>
+          <CardTitle>Seleccionar Lote</CardTitle>
+        </CardHeader>
         <CardContent>
-          <Select
-            value={String(añoSeleccionado)}
-            onValueChange={v => setAñoSeleccionado(parseInt(v))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Selecciona un año" />
+          <Select onValueChange={setSelectedLote}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccione un lote" />
             </SelectTrigger>
-
             <SelectContent>
-              {añosDisponibles.map(año => (
-                <SelectItem key={año} value={String(año)}>
-                  {año}
+              {lotes.map((l) => (
+                <SelectItem key={l.nombre} value={l.nombre}>
+                  {l.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -145,88 +86,49 @@ export default function Dashboard({ lotes, ventas }: DashboardProps) {
         </CardContent>
       </Card>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Ingresos Totales"
-          value={`$${ingresosTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}
-          icon={<DollarSign className="size-5" />}
-          bgColor="from-green-500 to-emerald-500"
-        />
+      {/* GRÁFICOS */}
+      <Tabs defaultValue="lineal" className="w-full">
+        <TabsList>
+          <TabsTrigger value="lineal">Crecimiento</TabsTrigger>
+          <TabsTrigger value="barras">Costos</TabsTrigger>
+        </TabsList>
 
-        <KPICard
-          title="Costos"
-          value={`$${costosTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}
-          icon={<Package className="size-5" />}
-          bgColor="from-red-500 to-orange-500"
-        />
+        {/* GRÁFICO LINEAL */}
+        <TabsContent value="lineal">
+          <Card className="p-4 h-[400px]">
+            <CardHeader>
+              <CardTitle>Historial de Crecimiento</CardTitle>
+            </CardHeader>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={filteredData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="fecha" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="peso_promedio" stroke="#0ea5e9" />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+        </TabsContent>
 
-        <KPICard
-          title="Ganancia"
-          value={`$${gananciaTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}
-          icon={<TrendingUp className="size-5" />}
-          trend={gananciaTotal > 0 ? 'up' : 'down'}
-          bgColor="from-emerald-500 to-green-500"
-        />
-
-        <KPICard
-          title="Margen"
-          value={`${margenGanancia.toFixed(1)}%`}
-          icon={<BarChart3 className="size-5" />}
-          trend={margenGanancia > 20 ? 'up' : margenGanancia < 0 ? 'down' : 'neutral'}
-          bgColor="from-blue-500 to-indigo-500"
-        />
-      </div>
-
-      {/* Gráfico ingresos */}
-      <Card>
-        <CardHeader><CardTitle>Ingresos Mensuales</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={ventasPorMes}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="inggresos" stroke="var(--primary)" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Gráfico libras */}
-      <Card>
-        <CardHeader><CardTitle>Libras Vendidas</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={ventasPorMes}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="mes" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="libras" fill="var(--primary)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Lotes rentables */}
-      <Card>
-        <CardHeader><CardTitle>Top 10 Lotes Más Rentables</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={rankingLotes} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="nombre" type="category" width={150} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="ganancia" fill="var(--success)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        {/* GRÁFICO DE BARRAS */}
+        <TabsContent value="barras">
+          <Card className="p-4 h-[400px]">
+            <CardHeader>
+              <CardTitle>Costos de Producción</CardTitle>
+            </CardHeader>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={lotes}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="nombre" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="costo_produccion" fill="#06b6d4" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
