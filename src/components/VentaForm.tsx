@@ -9,8 +9,6 @@ import {
   SelectValue,
   SelectItem,
 } from "./ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-
 import { Lote, Proveedor, Vendedor } from "../App";
 
 interface Props {
@@ -26,7 +24,6 @@ interface Props {
     proveedor: string;
     vendedor: string;
   }) => void;
-  onCreateProveedor: (data: Omit<Proveedor, "id">) => void;
 }
 
 export function VentaForm({
@@ -35,7 +32,6 @@ export function VentaForm({
   vendedores,
   vendedorNombre,
   onSubmit,
-  onCreateProveedor,
 }: Props) {
   const [form, setForm] = useState({
     lote_id: "",
@@ -60,6 +56,7 @@ export function VentaForm({
 
   return (
     <form onSubmit={handle} className="space-y-4 bg-white p-6 rounded-lg shadow">
+
       {/* Lote */}
       <div>
         <Label>Lote</Label>
@@ -124,7 +121,6 @@ export function VentaForm({
             }
           />
         </div>
-
         <div>
           <Label>Precio por libra ($)</Label>
           <Input
@@ -156,7 +152,7 @@ export function VentaForm({
           onValueChange={(v) => setForm({ ...form, vendedor: v })}
         >
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Seleccionar vendedor" />
           </SelectTrigger>
           <SelectContent>
             {vendedores.map((v) => (
@@ -168,7 +164,9 @@ export function VentaForm({
         </Select>
       </div>
 
-      <Button className="w-full bg-teal-600">Registrar venta</Button>
+      <Button className="w-full bg-teal-600 text-white hover:bg-teal-700">
+        Registrar venta
+      </Button>
     </form>
   );
 }
