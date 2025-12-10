@@ -203,18 +203,25 @@ export default function App() {
   };
 
   // ====================
-  // FETCH: VENTAS
-  // ====================
-  const fetchVentas = async () => {
+// FETCH: VENTAS (CORREGIDO)
+// ====================
+const fetchVentas = async () => {
   const { data, error } = await supabase
     .from("ventas")
-    .select(
-      "id, lote_id, fecha, libras, precio_libra, proveedor_no, vendedor_nor"
-    )
+    .select(`
+      id,
+      lote_id,
+      fecha,
+      libras,
+      precio_libra,
+      proveedor_nombre,
+      vendedor_nombre
+    `)
     .order("fecha", { ascending: false });
 
   if (error) {
     console.error("Error cargando ventas:", error);
+    setVentas([]); // evita que el dashboard crashee
     return;
   }
 
@@ -225,8 +232,8 @@ export default function App() {
       fecha: row.fecha,
       libras: Number(row.libras) || 0,
       precioLibra: Number(row.precio_libra) || 0,
-      proveedor: row.proveedor_no ?? "",
-      vendedor: row.vendedor_nor ?? "",
+      proveedor: row.proveedor_nombre ?? "",
+      vendedor: row.vendedor_nombre ?? "",
     })) ?? [];
 
   setVentas(mapped);
