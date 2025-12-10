@@ -83,7 +83,8 @@ export interface Cosecha {
   loteId: string;
   fecha: string;
   libras: number;
-  pescador: string;
+  pescador_id: string;  // UUID correcto
+  pescador_nombre: string; // nombre visible
 }
 
 export interface Venta {
@@ -329,7 +330,8 @@ export default function App() {
     loteId: row.lote_id,
     fecha: row.fecha,
     libras: Number(row.libras) || 0,
-    pescador: row.pescador_nombre ?? "",
+    pescador_id: row.pescador_id,
+pescador_nombre: row.pescador_nombre ?? "",
   }));
 
   setCosechas(mapped);
@@ -541,16 +543,16 @@ const handleDeleteLote = async (loteId: string) => {
     .eq("id", cosechaData.loteId);
 
   setCosechas(prev => [
-    ...prev,
-    {
-      id: data.id,
-      loteId: cosechaData.loteId,
-      fecha: cosechaData.fecha,
-      libras: cosechaData.libras,
-      pescador: pescador?.nombre ?? "",
-    }
-  ]);
-};
+  ...prev,
+  {
+    id: data.id,
+    loteId: cosechaData.loteId,
+    fecha: cosechaData.fecha,
+    libras: cosechaData.libras,
+    pescador_id: cosechaData.pescador_id,
+    pescador_nombre: pescador?.nombre ?? "",
+  }
+]);
 
 
   // ====================
