@@ -354,16 +354,16 @@ export default function App() {
     "id" | "librasCosechadas" | "librasVendidas" | "ingresosTotales"
   >
 ) => {
-    const { error } = await supabase.from("lotes").insert({
+  const { error } = await supabase.from("lotes").insert({
     nombre: loteData.nombre,
     fecha_inicio: loteData.fechaInicio,
     fecha_estimada_pesca: loteData.fechaEstimadaPesca,
     tipo_camaron: loteData.tipoCamaron,
     estado: loteData.estado,
-    librascosechadas: 0,
-    librasvendidas: 0,
+    libras_cosechadas: 0,
+    libras_vendidas: 0,
     costo_produccion: loteData.costoProduccion,
-    ingresostotales: 0,   // ✅ NOMBRE REAL EN BD
+    ingresostotales: 0, // NOMBRE REAL SEGÚN SUPABASE
   });
 
   if (error) {
@@ -373,6 +373,7 @@ export default function App() {
 
   setShowLoteForm(false);
 };
+
 
 
   const handleUpdateLoteEstado = async (
