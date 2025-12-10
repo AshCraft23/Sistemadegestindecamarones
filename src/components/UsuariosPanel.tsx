@@ -1,255 +1,214 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { Plus } from "lucide-react";
-import { UsuariosTable } from "./UsuariosTable";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "./ui/select";
+import { Switch } from "./ui/switch";
+import { Usuario, UserRole } from "../App";
 
-interface Usuario {
-  id: string;
-  name: string;
-  username: string;
-  email: string;
-  password: string;
-  role: string;
-  active: boolean;
+interface UsuariosPanelProps {
+  usuarios: Usuario[];
+  onCreateUsuario: (data: Omit<Usuario, "id">) => void;
+  onUpdateUsuario: (id: string, data: Omit<Usuario, "id">) => void;
+  onDeleteUsuario: (id: string) => void;
 }
 
-export function UsuariosPanel() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
-
-  const [formData, setFormData] = useState({
-    name: "",
+export function UsuariosPanel({
+  usuarios,
+  onCreateUsuario,
+  onUpdateUsuario,
+  onDeleteUsuario,
+}: UsuariosPanelProps) {
+  const [formData, setFormData] = useState<Omit<Usuario, "id">>({
+    nombre: "",
     username: "",
-    email: "",
     password: "",
-    role: "Administrador",
-    active: true,
+    rol: "Vendedor",
+    activo: true,
   });
 
-  // ======================================================
-  // 📌 CARGAR USUARIOS
-  // ======================================================
-  const fetchUsuarios = async () => {
-    const { data, error } = await supabase.from("users").select("*");
+  const [editId, setEditId] = useState<string | null>(null);
 
-    if (error) {
-      console.error("Error cargando usuarios:", error);
-      return;
+  // ==================================================
+  // SUBMIT CREAR / ACTUALIZAR
+  // ==================================================
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (editId) {
+      onUpdateUsuario(editId, formData);
+      setEditId(null);
+    } else {
+      onCreateUsuario(formData);
     }
 
-    setUsuarios(data);
-  };
-
-  // ======================================================
-  // 🔥 REALTIME (se actualiza solo como proveedores)
-  // ======================================================
-  useEffect(() => {
-    fetchUsuarios();
-
-    const channel = supabase
-      .channel("realtime:users")
-      .on(
-        "postgres_changes",
-        { event: "*", table: "users", schema: "public" },
-        () => fetchUsuarios()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  // ======================================================
-  // 🟢 CREAR USUARIO
-  // ======================================================
-  const onCreateUsuario = async () => {
-    const { error } = await supabase.from("users").insert(formData);
-
-    if (error) {
-      alert("Error creando usuario: " + error.message);
-      return;
-    }
-
-    setShowForm(false);
-  };
-
-  // ======================================================
-  // 🟡 EDITAR USUARIO
-  // ======================================================
-  const onUpdateUsuario = async () => {
-    if (!editingUser) return;
-
-    const { error } = await supabase
-      .from("users")
-      .update(formData)
-      .eq("id", editingUser.id);
-
-    if (error) {
-      alert("Error actualizando usuario: " + error.message);
-      return;
-    }
-
-    setEditingUser(null);
-    setShowForm(false);
-  };
-
-  // ======================================================
-  // 🔴 ELIMINAR USUARIO
-  // ======================================================
-  const onDeleteUsuario = async (id: string) => {
-    const { error } = await supabase.from("users").delete().eq("id", id);
-
-    if (error) {
-      alert("Error eliminando usuario: " + error.message);
-      return;
-    }
-  };
-
-  // ======================================================
-  // 📌 Abrir modal para editar
-  // ======================================================
-  const openEdit = (u: Usuario) => {
-    setEditingUser(u);
     setFormData({
-      name: u.name,
-      username: u.username,
-      email: u.email,
-      password: u.password,
-      role: u.role,
-      active: u.active,
-    });
-    setShowForm(true);
-  };
-
-  // ======================================================
-  // 📌 Abrir modal para crear
-  // ======================================================
-  const openCreate = () => {
-    setEditingUser(null);
-    setFormData({
-      name: "",
+      nombre: "",
       username: "",
-      email: "",
       password: "",
-      role: "Administrador",
-      active: true,
+      rol: "Vendedor",
+      activo: true,
     });
-    setShowForm(true);
+  };
+
+  const startEdit = (usuario: Usuario) => {
+    setEditId(usuario.id);
+    setFormData({
+      nombre: usuario.nombre,
+      username: usuario.username,
+      password: usuario.password,
+      rol: usuario.rol,
+      activo: usuario.activo,
+    });
   };
 
   return (
-    <div className="space-y-6">
-      {/* Botón crear usuario */}
-      <div className="flex justify-end">
-        <Button
-          className="bg-gradient-to-r from-cyan-600 to-teal-600"
-          onClick={openCreate}
-        >
-          <Plus className="mr-2 size-4" /> Crear Usuario
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {editId ? "Editar Usuario" : "Crear Nuevo Usuario"}
+          </CardTitle>
+        </CardHeader>
 
-      {/* Tabla */}
-      <UsuariosTable
-        usuarios={usuarios}
-        onEdit={openEdit}
-        onDelete={onDeleteUsuario}
-      />
-
-      {/* Modal */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingUser ? "Editar Usuario" : "Crear Usuario"}
-            </DialogTitle>
-          </DialogHeader>
-
-          {/* FORMULARIO */}
-          <div className="space-y-4">
-            <input
-              className="border p-2 w-full rounded"
-              placeholder="Nombre completo"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
-
-            <input
-              className="border p-2 w-full rounded"
-              placeholder="Usuario"
-              value={formData.username}
-              onChange={(e) =>
-                setFormData({ ...formData, username: e.target.value })
-              }
-            />
-
-            <input
-              className="border p-2 w-full rounded"
-              placeholder="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-            />
-
-            <input
-              className="border p-2 w-full rounded"
-              placeholder="Contraseña"
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-            />
-
-            {/* ROLE */}
-            <select
-              className="border p-2 w-full rounded"
-              value={formData.role}
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
-            >
-              <option value="Administrador">Administrador</option>
-              <option value="Propietario">Propietario</option>
-              <option value="Vendedor">Vendedor</option>
-              <option value="Pescador">Pescador</option>
-            </select>
-
-            {/* Activo/inactivo */}
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.active}
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nombre */}
+            <div>
+              <Label>Nombre</Label>
+              <Input
+                value={formData.nombre}
                 onChange={(e) =>
-                  setFormData({ ...formData, active: e.target.checked })
+                  setFormData({ ...formData, nombre: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            {/* Username */}
+            <div>
+              <Label>Usuario</Label>
+              <Input
+                value={formData.username}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            {/* Rol */}
+            <div>
+              <Label>Rol</Label>
+              <Select
+                value={formData.rol}
+                onValueChange={(value: UserRole) =>
+                  setFormData({ ...formData, rol: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="Administrador">Administrador</SelectItem>
+                  <SelectItem value="Propietario">Propietario</SelectItem>
+                  <SelectItem value="Vendedor">Vendedor</SelectItem>
+                  <SelectItem value="Pescador">Pescador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Activo */}
+            <div className="flex items-center gap-2 mt-2">
+              <Switch
+                checked={formData.activo}
+                onCheckedChange={(value) =>
+                  setFormData({ ...formData, activo: value })
                 }
               />
-              Activo
-            </label>
+              <Label>Activo</Label>
+            </div>
 
-            {/* BOTÓN GUARDAR */}
-            <Button
-              className="w-full bg-gradient-to-r from-cyan-600 to-teal-600"
-              onClick={editingUser ? onUpdateUsuario : onCreateUsuario}
-            >
-              {editingUser ? "Guardar Cambios" : "Crear Usuario"}
+            <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
+              {editId ? "Guardar Cambios" : "Crear Usuario"}
             </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Tabla de usuarios */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Usuarios Registrados</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <div className="space-y-2">
+            {usuarios.length === 0 && (
+              <p className="text-gray-500 text-center">
+                No hay usuarios registrados
+              </p>
+            )}
+
+            {usuarios.map((u) => (
+              <div
+                key={u.id}
+                className="flex justify-between items-center border rounded-md p-3 bg-white"
+              >
+                <div>
+                  <p className="font-semibold">{u.nombre}</p>
+                  <p className="text-sm text-gray-600">{u.username}</p>
+                  <p className="text-sm text-gray-700">{u.rol}</p>
+                  <p
+                    className={
+                      u.activo ? "text-green-600 text-sm" : "text-red-600 text-sm"
+                    }
+                  >
+                    {u.activo ? "Activo" : "Inactivo"}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => startEdit(u)}
+                  >
+                    Editar
+                  </Button>
+
+                  <Button
+                    variant="destructive"
+                    onClick={() => onDeleteUsuario(u.id)}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
     </div>
   );
 }

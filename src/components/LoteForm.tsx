@@ -1,9 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { EstadoLote } from '../App';
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { EstadoLote } from "../App";
 
 interface LoteFormProps {
   onSubmit: (loteData: {
@@ -17,92 +23,88 @@ interface LoteFormProps {
 }
 
 export function LoteForm({ onSubmit }: LoteFormProps) {
-
-  const hoy = new Date().toISOString().split("T")[0];
-
   const [formData, setFormData] = useState({
     nombre: "",
-    fechaInicio: hoy,
+    fechaInicio: new Date().toISOString().split("T")[0],
     fechaEstimadaPesca: "",
     tipoCamaron: "Vannamei",
     estado: "Crianza" as EstadoLote,
     costoProduccion: 0,
   });
 
-  // Calcular fecha estimada automáticamente
+  // 🧮 Calcular fecha estimada de pesca = 90 días después
   useEffect(() => {
-    if (formData.fechaInicio) {
-      const f = new Date(formData.fechaInicio);
-      f.setDate(f.getDate() + 90);
-      setFormData((prev) => ({
-        ...prev,
-        fechaEstimadaPesca: f.toISOString().split("T")[0],
-      }));
-    }
+    const fecha = new Date(formData.fechaInicio);
+    const estimada = new Date(fecha);
+    estimada.setDate(fecha.getDate() + 90);
+
+    setFormData((f) => ({
+      ...f,
+      fechaEstimadaPesca: estimada.toISOString().split("T")[0],
+    }));
   }, [formData.fechaInicio]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validación extra por si acaso
-    if (!formData.fechaInicio) {
-      alert("La fecha de inicio no puede estar vacía.");
-      return;
-    }
-
     onSubmit(formData);
-
-    // Reset
-    setFormData({
-      nombre: "",
-      fechaInicio: hoy,
-      fechaEstimadaPesca: "",
-      tipoCamaron: "Vannamei",
-      estado: "Crianza",
-      costoProduccion: 0,
-    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-
+      {/* Nombre */}
       <div className="space-y-2">
         <Label htmlFor="nombre">Nombre del Lote</Label>
         <Input
           id="nombre"
+          placeholder="Ej: Piscina Norte A"
           value={formData.nombre}
           onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
           required
         />
       </div>
 
+      {/* Fecha inicio */}
       <div className="space-y-2">
         <Label htmlFor="fechaInicio">Fecha de Inicio</Label>
         <Input
           id="fechaInicio"
           type="date"
           value={formData.fechaInicio}
-          onChange={(e) => setFormData({ ...formData, fechaInicio: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, fechaInicio: e.target.value })
+          }
           required
         />
       </div>
 
+      {/* Fecha estimada pesca */}
       <div className="space-y-2">
-        <Label>Fecha Estimada de Pesca (Automática)</Label>
+        <Label htmlFor="fechaEstimadaPesca">
+          Fecha Estimada de Pesca (90 días)
+        </Label>
         <Input
+          id="fechaEstimadaPesca"
           type="date"
           value={formData.fechaEstimadaPesca}
-          disabled
+          onChange={(e) =>
+            setFormData({ ...formData, fechaEstimadaPesca: e.target.value })
+          }
+          required
         />
       </div>
 
+      {/* Tipo camaron */}
       <div className="space-y-2">
         <Label>Tipo de Camarón</Label>
         <Select
           value={formData.tipoCamaron}
-          onValueChange={(val) => setFormData({ ...formData, tipoCamaron: val })}
+          onValueChange={(value) =>
+            setFormData({ ...formData, tipoCamaron: value })
+          }
         >
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="Vannamei">Vannamei</SelectItem>
             <SelectItem value="Litopenaeus">Litopenaeus</SelectItem>
@@ -112,13 +114,18 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         </Select>
       </div>
 
+      {/* Estado */}
       <div className="space-y-2">
         <Label>Estado Inicial</Label>
         <Select
           value={formData.estado}
-          onValueChange={(value: EstadoLote) => setFormData({ ...formData, estado: value })}
+          onValueChange={(value: EstadoLote) =>
+            setFormData({ ...formData, estado: value })
+          }
         >
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="Crianza">Crianza</SelectItem>
             <SelectItem value="Listo para Pescar">Listo para Pescar</SelectItem>
@@ -127,24 +134,27 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         </Select>
       </div>
 
+      {/* Costo */}
       <div className="space-y-2">
-        <Label htmlFor="costo">Costo de Producción</Label>
+        <Label htmlFor="costoProduccion">Costo de Producción</Label>
         <Input
-          id="costo"
+          id="costoProduccion"
           type="number"
           min="0"
           step="0.01"
+          placeholder="0.00"
           value={formData.costoProduccion}
           onChange={(e) =>
-            setFormData({ ...formData, costoProduccion: parseFloat(e.target.value) || 0 })
+            setFormData({
+              ...formData,
+              costoProduccion: parseFloat(e.target.value) || 0,
+            })
           }
           required
         />
       </div>
 
-      <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white">
-        Crear Lote
-      </Button>
+      <Button className="w-full bg-cyan-600">Crear Lote</Button>
     </form>
   );
 }

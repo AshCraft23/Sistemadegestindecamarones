@@ -1,7 +1,7 @@
-import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
-import { Calendar, Fish } from 'lucide-react';
-import { Lote, EstadoLote } from '../App';
+import { Card, CardContent } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Calendar, Fish } from "lucide-react";
+import { Lote, EstadoLote } from "../App";
 
 interface LotesListProps {
   lotes: Lote[];
@@ -10,27 +10,35 @@ interface LotesListProps {
 }
 
 const estadoColors: Record<EstadoLote, string> = {
-  Crianza: 'bg-blue-100 text-blue-800 border-blue-200',
-  'Listo para Pescar': 'bg-green-100 text-green-800 border-green-200',
-  'En Venta': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-  Reposo: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  Descarte: 'bg-red-100 text-red-800 border-red-200',
+  Crianza: "bg-blue-100 text-blue-800 border-blue-200",
+  "Listo para Pescar": "bg-green-100 text-green-800 border-green-200",
+  "En Venta": "bg-cyan-100 text-cyan-800 border-cyan-200",
+  Reposo: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  Descarte: "bg-red-100 text-red-800 border-red-200",
 };
 
-export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProps) {
+export function LotesList({
+  lotes,
+  onSelectLote,
+  selectedLoteId,
+}: LotesListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {lotes.map((lote) => {
         const isSelected = lote.id === selectedLoteId;
 
-        const librasDisponibles = lote.librasCosechadas - lote.librasVendidas;
-        const gananciaBruta = lote.ingresosTotales - lote.costoProduccion;
+        // ✔ nombres EXACTOS desde Supabase
+        const librasDisponibles =
+          (lote.librascosechadas ?? 0) - (lote.librasvendidas ?? 0);
+
+        const gananciaBruta =
+          (lote.ingresostotales ?? 0) - (lote.costo_produccion ?? 0);
 
         return (
           <Card
             key={lote.id}
             className={`cursor-pointer transition-all hover:shadow-lg ${
-              isSelected ? 'ring-2 ring-cyan-500 border-cyan-500' : ''
+              isSelected ? "ring-2 ring-cyan-500 border-cyan-500" : ""
             }`}
             onClick={() => onSelectLote(lote.id)}
           >
@@ -40,42 +48,50 @@ export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProp
                   <h3 className="text-gray-900 mb-1">{lote.nombre}</h3>
                   <p className="text-sm text-gray-500">{lote.id}</p>
                 </div>
-                <Badge className={estadoColors[lote.estado]}>{lote.estado}</Badge>
+
+                <Badge className={estadoColors[lote.estado]}>
+                  {lote.estado}
+                </Badge>
               </div>
 
               <div className="space-y-3">
+                {/* Tipo de camarón */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Fish className="size-4 text-cyan-600" />
-                  <span>{lote.tipoCamaron}</span>
+                  <span>{lote.tipo_camaron}</span>
                 </div>
 
+                {/* Fechas */}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-cyan-600" />
                   <span>
-                    Inicio:{' '}
-                    {new Date(lote.fechaInicio).toLocaleDateString('es-ES')}
+                    Inicio:{" "}
+                    {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="size-4 text-teal-600" />
                   <span>
-                    Est. Pesca:{' '}
-                    {new Date(lote.fechaEstimadaPesca).toLocaleDateString('es-ES')}
+                    Est. Pesca:{" "}
+                    {new Date(
+                      lote.fecha_estimada_pesca
+                    ).toLocaleDateString("es-ES")}
                   </span>
                 </div>
 
+                {/* Datos financieros */}
                 <div className="pt-3 border-t border-gray-200 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Cosechado:</span>
-                    <span>{lote.librasCosechadas.toFixed(2)} lb</span>
+                    <span>{Number(lote.librascosechadas).toFixed(2)} lb</span>
                   </div>
 
-                  {lote.librasCosechadas > 0 && (
+                  {lote.librascosechadas > 0 && (
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Vendido:</span>
-                        <span>{lote.librasVendidas.toFixed(2)} lb</span>
+                        <span>{Number(lote.librasvendidas).toFixed(2)} lb</span>
                       </div>
 
                       <div className="flex justify-between text-sm">
@@ -89,8 +105,14 @@ export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProp
 
                   <div className="flex justify-between text-sm pt-2 border-t border-gray-100">
                     <span className="text-gray-600">Ganancia:</span>
-                    <span className={gananciaBruta >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      ${gananciaBruta.toLocaleString('es-ES')}
+                    <span
+                      className={
+                        gananciaBruta >= 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }
+                    >
+                      ${gananciaBruta.toLocaleString("es-ES")}
                     </span>
                   </div>
                 </div>
