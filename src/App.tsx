@@ -57,12 +57,10 @@ export interface Usuario {
   activo: boolean;     // mapea a "active"
 }
 
-<<<<<<< HEAD
 // NOTA: este tipo mezcla lo que viene de la vista (snake_case)
 // y alias en camelCase / sin guión bajo para que otros componentes sigan funcionando.
-=======
 
->>>>>>> e3c1dffc798b6ac7b802da3fb906b080be815bdc
+
 export interface Lote {
   id: string;
   nombre: string;
@@ -293,7 +291,6 @@ export default function App() {
   };
 
   // ====================
-<<<<<<< HEAD
   // FETCH: USUARIOS (tabla users)
   // ====================
   const fetchUsuarios = async () => {
@@ -343,7 +340,6 @@ export default function App() {
 
   setCosechas(mapped);
 };
->>>>>>> e3c1dffc798b6ac7b802da3fb906b080be815bdc
 
   // ====================
   // FETCH ALL
@@ -355,11 +351,8 @@ export default function App() {
       fetchProveedores(),
       fetchPescadores(),
       fetchVendedores(),
-<<<<<<< HEAD
       fetchUsuarios(),
-=======
       fetchCosechas(), // ← NECESARIO
->>>>>>> e3c1dffc798b6ac7b802da3fb906b080be815bdc
     ]);
 
   };
