@@ -20,7 +20,7 @@ export default defineConfig({
   preview: {
     host: true,
     port: 8080,
-    allowedHosts: ["*", ".railway.app"],
+    allowedHosts: ["*", ".railway.app", "gelca.qzz.io"],
   },
 
   optimizeDeps: {
