@@ -516,7 +516,6 @@ const handleDeleteLote = async (loteId: string) => {
   libras: number;
   pescador_id: string;
 }) => {
-
   const pescador = pescadores.find(p => p.id === cosechaData.pescador_id);
 
   const { data, error } = await supabase
@@ -750,7 +749,7 @@ const handleDeleteLote = async (loteId: string) => {
               lotes={lotes.filter((l) => l.estado === "Listo para Pescar")}
               onSubmit={handleRegistrarCosecha}
               pescadores={pescadores.filter((p) => p.activo)}
-              pescadorNombre={currentUser.nombre}
+              pescadorId={currentUser.id}
             />
           </div>
         </main>
@@ -920,7 +919,7 @@ const handleDeleteLote = async (loteId: string) => {
                   lotes={lotes.filter((l) => l.estado === "Listo para Pescar")}
                   onSubmit={handleRegistrarCosecha}
                   pescadores={pescadores.filter((p) => p.activo)}
-                  pescadorNombre={currentUser.nombre}
+                  pescadorId={currentUser.id}
                 />
               </div>
             </TabsContent>

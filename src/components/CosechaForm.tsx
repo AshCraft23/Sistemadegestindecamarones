@@ -20,7 +20,7 @@ interface CosechaFormProps {
   onSubmit: (data: {
     loteId: string;
     fecha: string;
-    libras_cosechadas: number;
+    libras: number;
     pescador_id: string;
   }) => void;
 }
@@ -34,8 +34,8 @@ export function CosechaForm({
   const [formData, setFormData] = useState({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
-    libras: 0, // Se mantiene como estado interno
-    pescador_id: pescadorId,
+    libras: 0,
+    pescador_id: pescadorId,  // se autocompleta correctamente
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,7 +54,7 @@ export function CosechaForm({
     onSubmit({
       loteId: formData.loteId,
       fecha: formData.fecha,
-      libras_cosechadas: Number(formData.libras), // ← CAMBIADO AQUÍ
+      libras: Number(formData.libras),   // <-- AHORA CORRECTO
       pescador_id: formData.pescador_id,
     });
 
@@ -73,7 +73,7 @@ export function CosechaForm({
           <div className="flex items-center gap-3 text-yellow-800">
             <AlertCircle className="size-5" />
             <p>
-              No hay lotes disponibles para cosecha. 
+              No hay lotes disponibles para cosecha.
               Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.
             </p>
           </div>
