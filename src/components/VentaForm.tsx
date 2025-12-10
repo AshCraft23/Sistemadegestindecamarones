@@ -24,6 +24,7 @@ interface Props {
     proveedor: string;
     vendedor: string;
   }) => void;
+  onCreateProveedor: (data: Omit<Proveedor, "id">) => void;
 }
 
 export function VentaForm({
@@ -47,17 +48,28 @@ export function VentaForm({
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (form.lote_id === "") {
+      alert("Debes seleccionar un lote.");
+      return;
+    }
+
+    if (form.libras <= 0) {
+      alert("Las libras deben ser mayores que 0.");
+      return;
+    }
+
     if (form.libras > inventario) {
       alert("No hay suficientes libras disponibles.");
       return;
     }
+
     onSubmit(form);
   };
 
   return (
     <form onSubmit={handle} className="space-y-4 bg-white p-6 rounded-lg shadow">
-
-      {/* Lote */}
+      {/* LOTE */}
       <div>
         <Label>Lote</Label>
         <Select
@@ -77,7 +89,7 @@ export function VentaForm({
         </Select>
       </div>
 
-      {/* Fecha */}
+      {/* FECHA */}
       <div>
         <Label>Fecha</Label>
         <Input
@@ -87,7 +99,7 @@ export function VentaForm({
         />
       </div>
 
-      {/* Proveedor */}
+      {/* PROVEEDOR */}
       <div>
         <Label>Proveedor</Label>
         <Select
@@ -107,7 +119,7 @@ export function VentaForm({
         </Select>
       </div>
 
-      {/* Libras & Precio */}
+      {/* LIBRAS Y PRECIO */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Libras</Label>
@@ -137,14 +149,14 @@ export function VentaForm({
         </div>
       </div>
 
-      {/* Total */}
+      {/* TOTAL */}
       <div className="bg-cyan-50 border border-cyan-200 p-3 rounded text-right">
         <p className="font-semibold text-cyan-800">
           Total: ${(form.libras * form.precio_libra).toFixed(2)}
         </p>
       </div>
 
-      {/* Vendedor */}
+      {/* VENDEDOR */}
       <div>
         <Label>Vendedor</Label>
         <Select
@@ -152,7 +164,7 @@ export function VentaForm({
           onValueChange={(v) => setForm({ ...form, vendedor: v })}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Seleccionar vendedor" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {vendedores.map((v) => (
@@ -164,6 +176,7 @@ export function VentaForm({
         </Select>
       </div>
 
+      {/* BOTÓN */}
       <Button className="w-full bg-teal-600 text-white hover:bg-teal-700">
         Registrar venta
       </Button>
