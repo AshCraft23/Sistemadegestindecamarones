@@ -21,12 +21,14 @@ interface Props {
   vendedores: Vendedor[];
   vendedorNombre: string;
   onSubmit: (data: {
-    loteId: string;
+    lote_id: string;
     fecha: string;
     libras: number;
-    precioLibra: number;
-    proveedor: string;
-    vendedor: string;
+    precio_libra: number;
+    proveedor_id: string;
+    proveedor_nombre: string;
+    vendedor_id: string;
+    vendedor_nombre: string;
   }) => void;
 }
 
@@ -37,57 +39,38 @@ export function VentaForm({
   vendedorNombre,
   onSubmit,
 }: Props) {
+
+  const vendedorDefault = vendedores.find(v => v.nombre === vendedorNombre);
+
   const [form, setForm] = useState({
-    loteId: "",
+    lote_id: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
-    precioLibra: 3.5,
-    proveedor: "",
-    vendedor: vendedorNombre || "",
+    precio_libra: 3.5,
+    proveedor_id: "",
+    proveedor_nombre: "",
+    vendedor_id: vendedorDefault?.id ?? "",
+    vendedor_nombre: vendedorNombre,
   });
 
-  const selected = lotes.find((l) => l.id === form.loteId);
-  const inventario = selected ? selected.libras_cosechadas - selected.libras_vendidas : 0;
+  const selected = lotes.find((l) => l.id === form.lote_id);
+  const inventario = selected?.libras_en_inventario ?? 0;
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.loteId) {
-      alert("Debes seleccionar un lote.");
-      return;
-    }
+    if (!form.lote_id) return alert("Debes seleccionar un lote.");
+    if (!form.proveedor_id) return alert("Debes seleccionar un proveedor.");
+    if (!form.vendedor_id) return alert("Debes seleccionar un vendedor.");
+    if (form.libras <= 0) return alert("Las libras deben ser mayores que 0.");
+    if (form.libras > inventario)
+      return alert("No hay suficientes libras disponibles.");
 
-    if (!form.proveedor) {
-      alert("Debes seleccionar un proveedor.");
-      return;
-    }
+    console.log("DATA DE VENTA RECIBIDA:", form);
 
-    if (!form.vendedor) {
-      alert("Debes seleccionar un vendedor.");
-      return;
-    }
-
-    if (form.libras <= 0) {
-      alert("Las libras deben ser mayores que 0.");
-      return;
-    }
-
-    if (form.libras > inventario) {
-      alert("No hay suficientes libras disponibles.");
-      return;
-    }
-
-    onSubmit({
-      loteId: form.loteId,
-      fecha: form.fecha,
-      libras: form.libras,
-      precioLibra: form.precioLibra,
-      proveedor: form.proveedor,
-      vendedor: form.vendedor,
-    });
+    onSubmit(form);
   };
 
-  // 🔶 Si no hay lotes, mostrarse mensaje
   if (lotes.length === 0) {
     return (
       <Card className="border-yellow-300 bg-yellow-50">
@@ -106,8 +89,8 @@ export function VentaForm({
       <div>
         <Label>Lote</Label>
         <Select
-          value={form.loteId}
-          onValueChange={(v) => setForm({ ...form, loteId: v })}
+          value={form.lote_id}
+          onValueChange={(v) => setForm({ ...form, lote_id: v })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar lote" />
@@ -115,7 +98,7 @@ export function VentaForm({
           <SelectContent>
             {lotes.map((l) => (
               <SelectItem key={l.id} value={l.id}>
-                {l.nombre} — {(l.libras_cosechadas - l.libras_vendidas).toFixed(2)} lb disp.
+                {l.nombre} — {l.libras_en_inventario?.toFixed(2)} lb disp.
               </SelectItem>
             ))}
           </SelectContent>
@@ -136,15 +119,22 @@ export function VentaForm({
       <div>
         <Label>Proveedor</Label>
         <Select
-          value={form.proveedor}
-          onValueChange={(v) => setForm({ ...form, proveedor: v })}
+          value={form.proveedor_id}
+          onValueChange={(v) => {
+            const prov = proveedores.find((p) => p.id === v);
+            setForm({
+              ...form,
+              proveedor_id: v,
+              proveedor_nombre: prov?.nombre ?? "",
+            });
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar proveedor" />
           </SelectTrigger>
           <SelectContent>
             {proveedores.map((p) => (
-              <SelectItem key={p.id} value={p.nombre}>
+              <SelectItem key={p.id} value={p.id}>
                 {p.nombre}
               </SelectItem>
             ))}
@@ -152,7 +142,7 @@ export function VentaForm({
         </Select>
       </div>
 
-      {/* LIBRAS & PRECIO */}
+      {/* LIBRAS + PRECIO */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Libras</Label>
@@ -160,6 +150,7 @@ export function VentaForm({
             type="number"
             step="0.01"
             value={form.libras}
+            max={inventario}
             onChange={(e) =>
               setForm({ ...form, libras: parseFloat(e.target.value) || 0 })
             }
@@ -171,11 +162,11 @@ export function VentaForm({
           <Input
             type="number"
             step="0.01"
-            value={form.precioLibra}
+            value={form.precio_libra}
             onChange={(e) =>
               setForm({
                 ...form,
-                precioLibra: parseFloat(e.target.value) || 0,
+                precio_libra: parseFloat(e.target.value) || 0,
               })
             }
           />
@@ -185,7 +176,7 @@ export function VentaForm({
       {/* TOTAL */}
       <div className="bg-cyan-50 border border-cyan-200 p-3 rounded text-right">
         <p className="font-semibold text-cyan-800">
-          Total: ${(form.libras * form.precioLibra).toFixed(2)}
+          Total: ${(form.libras * form.precio_libra).toFixed(2)}
         </p>
       </div>
 
@@ -193,26 +184,24 @@ export function VentaForm({
       <div>
         <Label>Vendedor</Label>
         <Select
-          value={form.vendedor}
-          onValueChange={(v) => setForm({ ...form, vendedor: v })}
+          value={form.vendedor_id}
+          onValueChange={(v) => {
+            const vend = vendedores.find((x) => x.id === v);
+            setForm({
+              ...form,
+              vendedor_id: v,
+              vendedor_nombre: vend?.nombre ?? "",
+            });
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar vendedor" />
           </SelectTrigger>
           <SelectContent>
             {vendedores.map((v) => (
-              <SelectItem key={v.id} value={v.nombre}>
+              <SelectItem key={v.id} value={v.id}>
                 {v.nombre}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      {/* BOTÓN */}
-      <Button className="w-full bg-teal-600 text-white hover:bg-teal-700">
-        Registrar venta
-      </Button>
-    </form>
-  );
-}
