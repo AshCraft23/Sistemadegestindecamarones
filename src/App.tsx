@@ -131,38 +131,38 @@ export default function App() {
   // FETCH: LOTES
   // ====================
   const fetchLotes = async () => {
-    const { data, error } = await supabase
-      .from("lotes")
-      .select(
-        "id, nombre, fecha_inicio, fecha_estimada_pesca, tipo_camaron, estado, librascosechadas, librasvendidas, costo_produccion, ingresostotales"
-      )
-      .order("fecha_inicio", { ascending: false });
+  const { data, error } = await supabase
+    .from("lotes")
+    .select(
+      "id, nombre, fecha_inicio, fecha_estimada_pesca, tipo_camaron, estado, libras_cosechadas, libras_vendidas, costo_produccion, ingresos_totales"
+    )
+    .order("fecha_inicio", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando lotes:", error);
-      return;
-    }
+  if (error) {
+    console.error("Error cargando lotes:", error);
+    return;
+  }
 
-    const mapped: Lote[] =
-      data?.map((row: any) => ({
-        id: row.id,
-        nombre: row.nombre,
-        fechaInicio: row.fecha_inicio,
-        fechaEstimadaPesca: row.fecha_estimada_pesca,
-        tipoCamaron: row.tipo_camaron,
-        estado: row.estado as EstadoLote,
-        librasCosechadas: row.librascosechadas ?? 0,
-        librasVendidas: row.librasvendidas ?? 0,
-        costoProduccion: row.costo_produccion ?? 0,
-        ingresostotales: row.ingresostotales ?? 0,
-      })) ?? [];
+  const mapped: Lote[] = (data ?? []).map((row: any) => ({
+    id: row.id,
+    nombre: row.nombre,
+    fechaInicio: row.fecha_inicio,
+    fechaEstimadaPesca: row.fecha_estimada_pesca,   // ✔ CORRECTO
+    tipoCamaron: row.tipo_camaron,
+    estado: row.estado,
+    librasCosechadas: row.libras_cosechadas ?? 0,
+    librasVendidas: row.libras_vendidas ?? 0,
+    costoProduccion: row.costo_produccion ?? 0,
+    ingresosTotales: row.ingresos_totales ?? 0,
+  }));
 
-    setLotes(mapped);
+  setLotes(mapped);
 
-    if (!selectedLoteId && mapped.length > 0) {
-      setSelectedLoteId(mapped[0].id);
-    }
-  };
+  if (!selectedLoteId && mapped.length > 0) {
+    setSelectedLoteId(mapped[0].id);
+  }
+};
+
 
   // ====================
   // FETCH: VENTAS
@@ -348,6 +348,7 @@ export default function App() {
   // ====================
   // CRUD LOTES
   // ====================
+  
   const handleCreateLote = async (
   loteData: Omit<
     Lote,
@@ -357,13 +358,13 @@ export default function App() {
   const { error } = await supabase.from("lotes").insert({
     nombre: loteData.nombre,
     fecha_inicio: loteData.fechaInicio,
-    fecha_estimada_pesca: loteData.fechaEstimadaPesca,
+    fecha_estimada_pesca: loteData.fechaEstimadaPesca,  // ✔ CORRECTO
     tipo_camaron: loteData.tipoCamaron,
     estado: loteData.estado,
     libras_cosechadas: 0,
     libras_vendidas: 0,
     costo_produccion: loteData.costoProduccion,
-    ingresostotales: 0, // NOMBRE REAL SEGÚN SUPABASE
+    ingresos_totales: 0,
   });
 
   if (error) {
