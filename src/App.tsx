@@ -573,43 +573,31 @@ export default function App() {
 // ====================
 // VENTAS (CORREGIDO)
 // ====================
-const handleRegistrarVenta = async (ventaData: {
-  lote_id: string;
-  fecha: string;
-  libras: number;
-  precio_libra: number;
-  proveedor_id: string;
-  proveedor_nombre: string;
-  vendedor_id: string;
-  vendedor_nombre: string;
-}) => {
-
+const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
   console.log("DATA DE VENTA RECIBIDA:", ventaData);
 
-  // Validaciones adicionales por seguridad
-  if (!ventaData.vendedor_id) {
-    alert("Error: El vendedor seleccionado no es válido.");
-    return;
-  }
-  if (!ventaData.proveedor_id) {
-    alert("Error: El proveedor seleccionado no es válido.");
+  const proveedorEncontrado = proveedores.find(
+    (p) => p.nombre === ventaData.proveedor
+  );
+
+  const vendedorEncontrado = vendedores.find(
+    (v) => v.nombre === ventaData.vendedor
+  );
+
+  if (!vendedorEncontrado) {
+    alert("Error: El vendedor seleccionado no existe.");
     return;
   }
 
-  // Insert a la tabla ventas
   const { error } = await supabase.from("ventas").insert({
-    lote_id: ventaData.lote_id,
+    lote_id: ventaData.loteId,
     fecha: ventaData.fecha,
     libras: ventaData.libras,
-    precio_libra: ventaData.precio_libra,
-
-    // IDs reales (FK válidas)
-    proveedor_id: ventaData.proveedor_id,
-    vendedor_id: ventaData.vendedor_id,
-
-    // Nombres para consultas rápidas
-    proveedor_nombre: ventaData.proveedor_nombre,
-    vendedor_nombre: ventaData.vendedor_nombre,
+    precio_libra: ventaData.precioLibra,
+    proveedor_id: proveedorEncontrado?.id ?? null,
+    proveedor_nombre: ventaData.proveedor,
+    vendedor_id: vendedorEncontrado.id,
+    vendedor_nombre: vendedorEncontrado.nombre,
   });
 
   if (error) {
@@ -618,10 +606,63 @@ const handleRegistrarVenta = async (ventaData: {
     return;
   }
 
-  // Recargar datos necesarios
-  await fetchVentas();
-  await fetchLotes();
+  fetchVentas();
+  fetchLotes();
 };
+
+  // ====================
+  // CRUD Proveedor / Pescador / Vendedor
+  // ====================
+  const handleCreateProveedor = async (proveedorData: Omit<Proveedor, "id">) => {
+    await supabase.from("proveedores").insert({
+      nombre: proveedorData.nombre,
+      contacto: proveedorData.contacto,
+      telefono: proveedorData.telefono,
+      email: proveedorData.email,
+      activo: proveedorData.activo,
+    });
+  };
+
+  const handleUpdateProveedor = async (
+    id: string,
+    proveedorData: Omit<Proveedor, "id">
+  ) => {
+    await supabase.from("proveedores").update(proveedorData).eq("id", id);
+  };
+
+  const handleDeleteProveedor = async (id: string) => {
+    await supabase.from("proveedores").delete().eq("id", id);
+  };
+
+  const handleCreatePescador = async (pescadorData: Omit<Pescador, "id">) => {
+    await supabase.from("pescadores").insert(pescadorData);
+  };
+
+  const handleUpdatePescador = async (
+    id: string,
+    pescadorData: Omit<Pescador, "id">
+  ) => {
+    await supabase.from("pescadores").update(pescadorData).eq("id", id);
+  };
+
+  const handleDeletePescador = async (id: string) => {
+    await supabase.from("pescadores").delete().eq("id", id);
+  };
+
+  const handleCreateVendedor = async (vendedorData: Omit<Vendedor, "id">) => {
+    await supabase.from("vendedores").insert(vendedorData);
+  };
+
+  const handleUpdateVendedor = async (
+    id: string,
+    vendedorData: Omit<Vendedor, "id">
+  ) => {
+    await supabase.from("vendedores").update(vendedorData).eq("id", id);
+  };
+
+  const handleDeleteVendedor = async (id: string) => {
+    await supabase.from("vendedores").delete().eq("id", id);
+  };
 
   // ====================
   // CRUD USUARIOS (tabla users)
