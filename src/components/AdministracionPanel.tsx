@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Plus } from 'lucide-react';
+import { Users, Building2, UserCircle, Plus } from 'lucide-react';
 
 import { Proveedor, Pescador, Vendedor, UserRole } from "../App";
 import { ProveedorForm } from "./ProveedorForm";
@@ -69,9 +69,9 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
     fetchVendedores();
   }, []);
 
-  // ==================================================
+  // ====================================
   // 🔥 CRUD PROVEEDORES
-  // ==================================================
+  // ====================================
   const onCreateProveedor = async (data: Omit<Proveedor, "id">) => {
     const { error } = await supabase.from("proveedores").insert(data);
     if (error) return alert(error.message);
@@ -85,7 +85,6 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
       .from("proveedores")
       .update(data)
       .eq("id", id);
-
     if (error) return alert(error.message);
 
     setEditingProveedor(null);
@@ -102,9 +101,9 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
     fetchProveedores();
   };
 
-  // ==================================================
+  // ====================================
   // 🔥 CRUD PESCADORES
-  // ==================================================
+  // ====================================
   const onCreatePescador = async (data: Omit<Pescador, "id">) => {
     const { error } = await supabase.from("pescadores").insert(data);
     if (error) return alert(error.message);
@@ -135,9 +134,9 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
     fetchPescadores();
   };
 
-  // ==================================================
+  // ====================================
   // 🔥 CRUD VENDEDORES
-  // ==================================================
+  // ====================================
   const onCreateVendedor = async (data: Omit<Vendedor, "id">) => {
     const { error } = await supabase.from("vendedores").insert(data);
     if (error) return alert(error.message);
@@ -168,23 +167,23 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
     fetchVendedores();
   };
 
-  // ==================================================
+  // ====================================
   // 🖥️  UI DEL PANEL
-  // ==================================================
+  // ====================================
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card className="border-cyan-200 border-2 bg-gradient-to-r from-cyan-50 to-teal-50">
+      {/* Tarjeta de encabezado */}
+      <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
         <CardHeader>
           <CardTitle className="text-cyan-900">Panel de Administración</CardTitle>
           <p className="text-sm text-gray-600">
-            Gestiona proveedores, pescadores y vendedores del sistema.
+            Gestiona proveedores, pescadores y vendedores del sistema
           </p>
         </CardHeader>
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="proveedores" className="space-y-6">
+      <Tabs defaultValue="proveedores" className="space-y-4">
         <TabsList className="bg-white">
           <TabsTrigger value="proveedores">Proveedores</TabsTrigger>
           <TabsTrigger value="pescadores">Pescadores</TabsTrigger>
@@ -194,19 +193,19 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
           )}
         </TabsList>
 
-        {/* ============================
-            TAB — PROVEEDORES
-        ============================== */}
+        {/* PROVEEDORES */}
         <TabsContent value="proveedores">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <CardTitle>Gestión de Proveedores</CardTitle>
 
+                {/* Crear */}
                 <Dialog open={showProveedorForm} onOpenChange={setShowProveedorForm}>
                   <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white">
-                      <Plus className="size-4 mr-2" /> Agregar Proveedor
+                    <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
+                      <Plus className="mr-2 size-4" />
+                      Agregar Proveedor
                     </Button>
                   </DialogTrigger>
 
@@ -214,7 +213,6 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
                     <DialogHeader>
                       <DialogTitle>Nuevo Proveedor</DialogTitle>
                     </DialogHeader>
-
                     <ProveedorForm onSubmit={onCreateProveedor} />
                   </DialogContent>
                 </Dialog>
@@ -230,7 +228,7 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
             </CardContent>
           </Card>
 
-          {/* Editar Proveedor */}
+          {/* Editar */}
           <Dialog open={!!editingProveedor} onOpenChange={() => setEditingProveedor(null)}>
             <DialogContent>
               <DialogHeader>
@@ -247,19 +245,18 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
           </Dialog>
         </TabsContent>
 
-        {/* ============================
-            TAB — PESCADORES
-        ============================== */}
+        {/* PESCADORES */}
         <TabsContent value="pescadores">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <CardTitle>Pescadores</CardTitle>
 
                 <Dialog open={showPescadorForm} onOpenChange={setShowPescadorForm}>
                   <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-teal-600 to-green-600 text-white">
-                      <Plus className="size-4 mr-2" /> Agregar Pescador
+                    <Button className="bg-gradient-to-r from-teal-600 to-green-600">
+                      <Plus className="mr-2 size-4" />
+                      Agregar Pescador
                     </Button>
                   </DialogTrigger>
 
@@ -283,7 +280,6 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
             </CardContent>
           </Card>
 
-          {/* Editar Pescador */}
           <Dialog open={!!editingPescador} onOpenChange={() => setEditingPescador(null)}>
             <DialogContent>
               <DialogHeader>
@@ -300,19 +296,18 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
           </Dialog>
         </TabsContent>
 
-        {/* ============================
-            TAB — VENDEDORES
-        ============================== */}
+        {/* VENDEDORES */}
         <TabsContent value="vendedores">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <CardTitle>Vendedores</CardTitle>
 
                 <Dialog open={showVendedorForm} onOpenChange={setShowVendedorForm}>
                   <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                      <Plus className="size-4 mr-2" /> Agregar Vendedor
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                      <Plus className="mr-2 size-4" />
+                      Agregar Vendedor
                     </Button>
                   </DialogTrigger>
 
@@ -336,7 +331,6 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
             </CardContent>
           </Card>
 
-          {/* Editar Vendedor */}
           <Dialog open={!!editingVendedor} onOpenChange={() => setEditingVendedor(null)}>
             <DialogContent>
               <DialogHeader>
@@ -353,16 +347,14 @@ export function AdministracionPanel({ userRole }: AdministracionPanelProps) {
           </Dialog>
         </TabsContent>
 
-        {/* ============================
-            TAB — USUARIOS (ADMIN)
-        ============================== */}
+        {/* USUARIOS (solo admin) */}
         {userRole === "Administrador" && (
           <TabsContent value="usuarios">
             <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
               <CardHeader>
                 <CardTitle className="text-cyan-900">Panel de Usuarios</CardTitle>
                 <p className="text-sm text-gray-600">
-                  Gestiona los usuarios del sistema.
+                  Gestiona los usuarios del sistema
                 </p>
               </CardHeader>
 
