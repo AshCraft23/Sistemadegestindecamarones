@@ -194,18 +194,18 @@ export default function App() {
     }
 
     const mapped: Venta[] =
-      data?.map((row: any) => ({
-        id: row.id,
-        loteId: row.lote_id,
-        fecha: row.fecha,
-        libras: row.libras ?? 0,
-        precioLibra: row.precio_libra ?? 0,
-        proveedor: row.proveedor_nombre ?? "",
-        vendedor: row.vendedor_nombre ?? "",
-      })) ?? [];
+  data?.map((row: any) => ({
+    id: row.id,
+    loteId: row.lote_id,
+    fecha: row.fecha,
 
-    setVentas(mapped);
-  };
+    // Convertimos SIEMPRE a número
+    libras: Number(row.libras) || 0,
+    precioLibra: Number(row.precio_libra) || 0,
+
+    proveedor: row.proveedor_nombre ?? "",
+    vendedor: row.vendedor_nombre ?? "",
+  })) ?? [];
 
   // ====================
   // FETCH: PROVEEDORES

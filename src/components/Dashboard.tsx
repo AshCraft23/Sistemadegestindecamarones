@@ -12,19 +12,9 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
+  Legend
 } from "recharts";
-import {
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  Percent,
-  Weight,
-  AlertCircle,
-  Edit2,
-  Check,
-  X,
-} from "lucide-react";
+import { Calendar, DollarSign, TrendingUp, Percent, Weight, AlertCircle, Edit2, Check, X } from "lucide-react";
 import { Lote, Venta, Cosecha, UserRole } from "../App";
 import { KPICard } from "./KPICard";
 import { TransactionTable } from "./TransactionTable";
@@ -36,16 +26,8 @@ interface DashboardProps {
   ventas: Venta[];
   cosechas: Cosecha[];
   userRole: UserRole;
-  onUpdateEstado: (
-    loteId: string,
-    nuevoEstado:
-      | "Crianza"
-      | "Listo para Pescar"
-      | "En Venta"
-      | "Reposo"
-      | "Descarte"
-  ) => void;
-  onUpdateFechaPesca?: (loteId: string, nuevaFecha: string) => void;
+  onUpdateEstado: (id: string, estado: Lote["estado"]) => void;
+  onUpdateFechaPesca: (id: string, nueva: string) => void;
 }
 
 const COLORS = ["#0891b2", "#14b8a6"];
@@ -55,7 +37,7 @@ const estadoColors = {
   "Listo para Pescar": "bg-green-100 text-green-800 border-green-200",
   "En Venta": "bg-cyan-100 text-cyan-800 border-cyan-200",
   Reposo: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  Descarte: "bg-red-100 text-red-800 border-red-200",
+  Descarte: "bg-red-100 text-red-800 border-red-200"
 };
 
 export function Dashboard({
@@ -64,15 +46,18 @@ export function Dashboard({
   cosechas,
   userRole,
   onUpdateEstado,
-  onUpdateFechaPesca,
+  onUpdateFechaPesca
 }: DashboardProps) {
-  // snake_case corregido
-  const librasCosechadas = lote.librascosechadas ?? 0;
-  const librasVendidas = lote.librasvendidas ?? 0;
-  const costoProduccion = lote.costo_produccion ?? 0;
-  const ingresosTotales = lote.ingresostotales ?? 0;
+  const [editandoFecha, setEditandoFecha] = useState(false);
+  const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
 
-  const librasDisponibles = librasCosechadas - librasVendidas;
+  // Valores normalizados
+  const librasCosechadas = Number(lote.librascosechadas) || 0;
+  const librasVendidas = Number(lote.librasvendidas) || 0;
+  const costoProduccion = Number(lote.costo_produccion) || 0;
+  const ingresosTotales = Number(lote.ingresostotales) || 0;
+
+  const librasDisponibles = Math.max(librasCosechadas - librasVendidas, 0);
 
   const gananciaBruta = ingresosTotales - costoProduccion;
   const porcentajeVendido =
@@ -80,46 +65,37 @@ export function Dashboard({
   const margenGanancia =
     costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
 
-  // FECHAS snake_case
-  const fechaInicio = new Date(lote.fecha_inicio);
-  const fechaEstimadaPesca = new Date(lote.fecha_estimada_pesca);
-
-  const hoy = new Date();
-  const diasEnCiclo = Math.floor(
-    (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  const [editandoFecha, setEditandoFecha] = useState(false);
-  const [nuevaFechaPesca, setNuevaFechaPesca] = useState(
-    lote.fecha_estimada_pesca
-  );
-
-  const handleGuardarFecha = () => {
-    if (onUpdateFechaPesca && nuevaFechaPesca) {
-      onUpdateFechaPesca(lote.id, nuevaFechaPesca);
-      setEditandoFecha(false);
-    }
-  };
-
+  // Agrupación segura por proveedor
   const ventasPorProveedor = ventas.reduce((acc, venta) => {
-    const existe = acc.find((i) => i.proveedor === venta.proveedor);
-    if (existe) {
-      existe.libras += venta.libras;
-      existe.ingresos += venta.libras * venta.precioLibra;
+    const libras = Number(venta.libras) || 0;
+    const precio = Number(venta.precioLibra) || 0;
+
+    const existente = acc.find((v) => v.proveedor === venta.proveedor);
+
+    if (existente) {
+      existente.libras += libras;
+      existente.ingresos += libras * precio;
     } else {
       acc.push({
         proveedor: venta.proveedor,
-        libras: venta.libras,
-        ingresos: venta.libras * venta.precioLibra,
+        libras,
+        ingresos: libras * precio
       });
     }
+
     return acc;
   }, [] as Array<{ proveedor: string; libras: number; ingresos: number }>);
 
   const inventarioData = [
     { name: "Vendido", value: librasVendidas },
-    { name: "Disponible", value: librasDisponibles },
+    { name: "Disponible", value: librasDisponibles }
   ];
+
+  const fechaInicio = new Date(lote.fecha_inicio);
+  const hoy = new Date();
+  const diasEnCiclo = Math.floor(
+    (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   return (
     <div className="space-y-6">
@@ -136,106 +112,99 @@ export function Dashboard({
               </div>
 
               <div className="flex items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <span>ID:</span>
-                  <span>{lote.id}</span>
-                </div>
+                <span>ID: {lote.id}</span>
+                <span>Tipo: {lote.tipo_camaron}</span>
 
-                <div className="flex items-center gap-2">
-                  <span>Tipo:</span>
-                  <span>{lote.tipo_camaron}</span>
-                </div>
+                <span>
+                  Inicio:{" "}
+                  {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
+                </span>
 
-                <div className="flex items-center gap-2">
-                  <Calendar className="size-4" />
-                  <span>
-                    Inicio: {fechaInicio.toLocaleDateString("es-ES")}
-                  </span>
-                </div>
-
+                {/* Fecha estimada pesca */}
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
-                  <span>Estimada pesca:</span>
-
                   {editandoFecha ? (
-                    <div className="flex items-center gap-2">
+                    <>
                       <Input
                         type="date"
-                        value={nuevaFechaPesca}
-                        onChange={(e) => setNuevaFechaPesca(e.target.value)}
+                        value={nuevaFecha}
+                        onChange={(e) => setNuevaFecha(e.target.value)}
                         className="w-40 h-8"
                       />
                       <Button
-                        onClick={handleGuardarFecha}
-                        className="bg-green-600 hover:bg-green-700"
                         size="sm"
+                        className="bg-green-600"
+                        onClick={() => {
+                          onUpdateFechaPesca(lote.id, nuevaFecha);
+                          setEditandoFecha(false);
+                        }}
                       >
-                        <Check className="size-4" />
+                        <Check />
                       </Button>
                       <Button
-                        onClick={() => setEditandoFecha(false)}
-                        variant="outline"
                         size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setNuevaFecha(lote.fecha_estimada_pesca);
+                          setEditandoFecha(false);
+                        }}
                       >
-                        <X className="size-4" />
+                        <X />
                       </Button>
-                    </div>
+                    </>
                   ) : (
                     <>
                       <span>
-                        {fechaEstimadaPesca.toLocaleDateString("es-ES")}
+                        {new Date(
+                          lote.fecha_estimada_pesca
+                        ).toLocaleDateString("es-ES")}
                       </span>
                       {userRole === "Administrador" && (
                         <Button
-                          onClick={() => setEditandoFecha(true)}
-                          variant="ghost"
                           size="sm"
-                          className="h-6 px-2"
+                          variant="ghost"
+                          onClick={() => setEditandoFecha(true)}
                         >
-                          <Edit2 className="size-3" />
+                          <Edit2 />
                         </Button>
                       )}
                     </>
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span>Días en ciclo: {diasEnCiclo}</span>
-                </div>
+                <span>Días en ciclo: {diasEnCiclo}</span>
               </div>
             </div>
 
-            {/* ACCIONES */}
+            {/* BOTONES DE ESTADO */}
             {userRole === "Propietario" && (
               <div className="flex gap-2">
                 {lote.estado === "Crianza" && (
                   <Button
-                    onClick={() =>
-                      onUpdateEstado(lote.id, "Listo para Pescar")
-                    }
-                    className="bg-green-600 hover:bg-green-700"
                     size="sm"
+                    className="bg-green-600"
+                    onClick={() => onUpdateEstado(lote.id, "Listo para Pescar")}
                   >
-                    Marcar Listo para Pescar
+                    Marcar Listo
                   </Button>
                 )}
 
                 {lote.estado === "En Venta" && librasDisponibles === 0 && (
                   <Button
-                    onClick={() => onUpdateEstado(lote.id, "Reposo")}
-                    className="bg-yellow-600 hover:bg-yellow-700"
                     size="sm"
+                    className="bg-yellow-600"
+                    onClick={() => onUpdateEstado(lote.id, "Reposo")}
                   >
-                    Poner en Reposo
+                    Reposo
                   </Button>
                 )}
 
                 <Button
-                  onClick={() => onUpdateEstado(lote.id, "Descarte")}
-                  variant="destructive"
                   size="sm"
+                  variant="destructive"
+                  onClick={() => onUpdateEstado(lote.id, "Descarte")}
                 >
-                  Descartar Lote
+                  Descartar
                 </Button>
               </div>
             )}
@@ -247,31 +216,23 @@ export function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Ganancia Bruta"
-          value={`$${gananciaBruta.toLocaleString("es-ES", {
-            minimumFractionDigits: 2,
-          })}`}
-          icon={<DollarSign className="size-5" />}
-          trend={
-            gananciaBruta > 0
-              ? "up"
-              : gananciaBruta < 0
-              ? "down"
-              : "neutral"
-          }
-          bgColor="from-emerald-500 to-green-500"
+          value={`$${gananciaBruta.toFixed(2)}`}
+          icon={<DollarSign />}
+          trend={gananciaBruta > 0 ? "up" : "neutral"}
+          bgColor="from-green-500 to-emerald-500"
         />
 
         <KPICard
           title="Libras Cosechadas"
           value={`${librasCosechadas.toFixed(2)} lb`}
-          icon={<Weight className="size-5" />}
+          icon={<Weight />}
           bgColor="from-cyan-500 to-blue-500"
         />
 
         <KPICard
           title="Porcentaje Vendido"
           value={`${porcentajeVendido.toFixed(1)}%`}
-          icon={<Percent className="size-5" />}
+          icon={<Percent />}
           subtitle={`${librasDisponibles.toFixed(2)} lb disponibles`}
           bgColor="from-teal-500 to-cyan-500"
         />
@@ -279,19 +240,68 @@ export function Dashboard({
         <KPICard
           title="Margen de Ganancia"
           value={`${margenGanancia.toFixed(1)}%`}
-          icon={<TrendingUp className="size-5" />}
-          trend={
-            margenGanancia > 20
-              ? "up"
-              : margenGanancia < 0
-              ? "down"
-              : "neutral"
-          }
+          icon={<TrendingUp />}
+          trend="neutral"
           bgColor="from-blue-500 to-indigo-500"
         />
       </div>
 
-      {/* TRANSACCIONES */}
+      {/* GRÁFICAS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {ventasPorProveedor.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Ventas por Proveedor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={ventasPorProveedor}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="proveedor"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="libras" fill="#0891b2" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        {librasCosechadas > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventario</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={inventarioData}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    label
+                    outerRadius={80}
+                  >
+                    {inventarioData.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* TABLA */}
       <Card>
         <CardHeader>
           <CardTitle>Historial de Transacciones</CardTitle>
