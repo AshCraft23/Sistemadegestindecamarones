@@ -61,7 +61,6 @@ export function CosechaForm({
     });
   };
 
-  // Si no hay lotes listos para pescar
   if (lotes.length === 0) {
     return (
       <Card className="border-yellow-200 bg-yellow-50">
@@ -69,8 +68,8 @@ export function CosechaForm({
           <div className="flex items-center gap-3 text-yellow-800">
             <AlertCircle className="size-5" />
             <p>
-              No hay lotes disponibles para cosecha. Solo los lotes con estado
-              "Listo para Pescar" pueden ser cosechados.
+              No hay lotes disponibles para cosecha.  
+              Solo los lotes con estado **"Listo para Pescar"** pueden cosecharse.
             </p>
           </div>
         </CardContent>
@@ -86,25 +85,22 @@ export function CosechaForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          
           {/* LOTE */}
           <div className="space-y-2">
-            <Label htmlFor="lote">Lote</Label>
+            <Label>Lote</Label>
             <Select
               value={formData.loteId}
               onValueChange={(value) =>
                 setFormData({ ...formData, loteId: value })
               }
-              required
             >
-              <SelectTrigger id="lote">
+              <SelectTrigger>
                 <SelectValue placeholder="Seleccionar lote" />
               </SelectTrigger>
-
               <SelectContent>
                 {lotes.map((lote) => (
                   <SelectItem key={lote.id} value={lote.id}>
-                    {lote.id} - {lote.nombre} ({lote.tipo_camaron})
+                    {lote.nombre} — {lote.tipo_camaron}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -113,27 +109,23 @@ export function CosechaForm({
 
           {/* FECHA */}
           <div className="space-y-2">
-            <Label htmlFor="fecha">Fecha de Cosecha</Label>
+            <Label>Fecha</Label>
             <Input
-              id="fecha"
               type="date"
               value={formData.fecha}
               onChange={(e) =>
                 setFormData({ ...formData, fecha: e.target.value })
               }
-              required
             />
           </div>
 
           {/* LIBRAS */}
           <div className="space-y-2">
-            <Label htmlFor="libras">Libras Cosechadas</Label>
+            <Label>Libras cosechadas</Label>
             <Input
-              id="libras"
               type="number"
               min="0.01"
               step="0.01"
-              placeholder="0.00"
               value={formData.libras || ""}
               onChange={(e) =>
                 setFormData({
@@ -141,39 +133,32 @@ export function CosechaForm({
                   libras: parseFloat(e.target.value) || 0,
                 })
               }
-              required
             />
-            <p className="text-xs text-gray-500">
-              Ingresa la cantidad total de libras cosechadas
-            </p>
           </div>
 
           {/* PESCADOR */}
           <div className="space-y-2">
-            <Label htmlFor="pescador">Pescador Responsable</Label>
+            <Label>Pescador</Label>
             <Select
               value={formData.pescador}
               onValueChange={(value) =>
                 setFormData({ ...formData, pescador: value })
               }
-              required
             >
-              <SelectTrigger id="pescador">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-
               <SelectContent>
                 {pescadores.map((p) => (
                   <SelectItem key={p.id} value={p.nombre}>
-                    {p.nombre} - {p.especialidad}
+                    {p.nombre} — {p.especialidad}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* BOTÓN */}
-          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white hover:from-cyan-700 hover:to-teal-700">
             Registrar Cosecha
           </Button>
         </form>
