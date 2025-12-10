@@ -84,7 +84,9 @@ export function AdministracionPanel({
           )}
         </TabsList>
 
-        {/* PROVEEDORES */}
+        {/* ======================================================
+            ===============   PROVEEDORES   ======================
+           ====================================================== */}
         <TabsContent value="proveedores">
           <Card>
             <CardHeader>
@@ -124,7 +126,6 @@ export function AdministracionPanel({
             </CardContent>
           </Card>
 
-          {/* Editar proveedor */}
           <Dialog open={!!editingProveedor} onOpenChange={() => setEditingProveedor(null)}>
             <DialogContent>
               <DialogHeader>
@@ -144,7 +145,9 @@ export function AdministracionPanel({
           </Dialog>
         </TabsContent>
 
-        {/* PESCADORES */}
+        {/* ======================================================
+            ===============   PESCADORES   =======================
+           ====================================================== */}
         <TabsContent value="pescadores">
           <Card>
             <CardHeader>
@@ -203,7 +206,9 @@ export function AdministracionPanel({
           </Dialog>
         </TabsContent>
 
-        {/* VENDEDORES */}
+        {/* ======================================================
+            ===============   VENDEDORES   =======================
+           ====================================================== */}
         <TabsContent value="vendedores">
           <Card>
             <CardHeader>
@@ -262,7 +267,9 @@ export function AdministracionPanel({
           </Dialog>
         </TabsContent>
 
-        {/* USUARIOS */}
+        {/* ======================================================
+            ==================== USUARIOS ========================
+           ====================================================== */}
         {userRole === "Administrador" && (
           <TabsContent value="usuarios">
             <Card>
