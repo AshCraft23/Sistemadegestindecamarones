@@ -14,7 +14,6 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
 import {
   Calendar,
   DollarSign,
@@ -26,7 +25,6 @@ import {
   Check,
   X,
 } from "lucide-react";
-
 import { Lote, Venta, Cosecha, UserRole } from "../App";
 import { KPICard } from "./KPICard";
 import { TransactionTable } from "./TransactionTable";
@@ -68,6 +66,29 @@ export function Dashboard({
   onUpdateEstado,
   onUpdateFechaPesca,
 }: DashboardProps) {
+  // snake_case corregido
+  const librasCosechadas = lote.librascosechadas ?? 0;
+  const librasVendidas = lote.librasvendidas ?? 0;
+  const costoProduccion = lote.costo_produccion ?? 0;
+  const ingresosTotales = lote.ingresostotales ?? 0;
+
+  const librasDisponibles = librasCosechadas - librasVendidas;
+
+  const gananciaBruta = ingresosTotales - costoProduccion;
+  const porcentajeVendido =
+    librasCosechadas > 0 ? (librasVendidas / librasCosechadas) * 100 : 0;
+  const margenGanancia =
+    costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
+
+  // FECHAS snake_case
+  const fechaInicio = new Date(lote.fecha_inicio);
+  const fechaEstimadaPesca = new Date(lote.fecha_estimada_pesca);
+
+  const hoy = new Date();
+  const diasEnCiclo = Math.floor(
+    (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
   const [editandoFecha, setEditandoFecha] = useState(false);
   const [nuevaFechaPesca, setNuevaFechaPesca] = useState(
     lote.fecha_estimada_pesca
@@ -80,54 +101,25 @@ export function Dashboard({
     }
   };
 
-  const handleCancelarEdicion = () => {
-    setNuevaFechaPesca(lote.fecha_estimada_pesca);
-    setEditandoFecha(false);
-  };
-
-  // Cálculos
-  const gananciaBruta = lote.ingresos_totales - lote.costo_produccion;
-  const porcentajeVendido =
-    lote.libras_cosechadas > 0
-      ? (lote.libras_vendidas / lote.libras_cosechadas) * 100
-      : 0;
-
-  const librasDisponibles =
-    lote.libras_cosechadas - lote.libras_vendidas;
-
-  const margenGanancia =
-    lote.costo_produccion > 0
-      ? (gananciaBruta / lote.costo_produccion) * 100
-      : 0;
-
-  // Ventas por proveedor
   const ventasPorProveedor = ventas.reduce((acc, venta) => {
-    const existing = acc.find((item) => item.proveedor === venta.proveedor);
-    if (existing) {
-      existing.libras += venta.libras;
-      existing.ingresos += venta.libras * venta.precio_libra;
+    const existe = acc.find((i) => i.proveedor === venta.proveedor);
+    if (existe) {
+      existe.libras += venta.libras;
+      existe.ingresos += venta.libras * venta.precioLibra;
     } else {
       acc.push({
         proveedor: venta.proveedor,
         libras: venta.libras,
-        ingresos: venta.libras * venta.precio_libra,
+        ingresos: venta.libras * venta.precioLibra,
       });
     }
     return acc;
   }, [] as Array<{ proveedor: string; libras: number; ingresos: number }>);
 
-  // Pie de inventario
   const inventarioData = [
-    { name: "Vendido", value: lote.libras_vendidas },
+    { name: "Vendido", value: librasVendidas },
     { name: "Disponible", value: librasDisponibles },
   ];
-
-  // Días en ciclo
-  const fechaInicio = new Date(lote.fecha_inicio);
-  const hoy = new Date();
-  const diasEnCiclo = Math.floor(
-    (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24)
-  );
 
   return (
     <div className="space-y-6">
@@ -137,9 +129,7 @@ export function Dashboard({
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <CardTitle className="text-cyan-900">
-                  {lote.nombre}
-                </CardTitle>
+                <CardTitle className="text-cyan-900">{lote.nombre}</CardTitle>
                 <Badge className={estadoColors[lote.estado]}>
                   {lote.estado}
                 </Badge>
@@ -159,14 +149,13 @@ export function Dashboard({
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4" />
                   <span>
-                    Inicio:{" "}
-                    {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
+                    Inicio: {fechaInicio.toLocaleDateString("es-ES")}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
-                  <span>Estimada pesca: </span>
+                  <span>Estimada pesca:</span>
 
                   {editandoFecha ? (
                     <div className="flex items-center gap-2">
@@ -176,7 +165,6 @@ export function Dashboard({
                         onChange={(e) => setNuevaFechaPesca(e.target.value)}
                         className="w-40 h-8"
                       />
-
                       <Button
                         onClick={handleGuardarFecha}
                         className="bg-green-600 hover:bg-green-700"
@@ -184,9 +172,8 @@ export function Dashboard({
                       >
                         <Check className="size-4" />
                       </Button>
-
                       <Button
-                        onClick={handleCancelarEdicion}
+                        onClick={() => setEditandoFecha(false)}
                         variant="outline"
                         size="sm"
                       >
@@ -196,11 +183,8 @@ export function Dashboard({
                   ) : (
                     <>
                       <span>
-                        {new Date(
-                          lote.fecha_estimada_pesca
-                        ).toLocaleDateString("es-ES")}
+                        {fechaEstimadaPesca.toLocaleDateString("es-ES")}
                       </span>
-
                       {userRole === "Administrador" && (
                         <Button
                           onClick={() => setEditandoFecha(true)}
@@ -221,7 +205,7 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* Controles propietarios */}
+            {/* ACCIONES */}
             {userRole === "Propietario" && (
               <div className="flex gap-2">
                 {lote.estado === "Crianza" && (
@@ -259,7 +243,7 @@ export function Dashboard({
         </CardHeader>
       </Card>
 
-      {/* KPIS */}
+      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Ganancia Bruta"
@@ -279,7 +263,7 @@ export function Dashboard({
 
         <KPICard
           title="Libras Cosechadas"
-          value={`${lote.libras_cosechadas.toFixed(2)} lb`}
+          value={`${librasCosechadas.toFixed(2)} lb`}
           icon={<Weight className="size-5" />}
           bgColor="from-cyan-500 to-blue-500"
         />
@@ -307,173 +291,11 @@ export function Dashboard({
         />
       </div>
 
-      {/* Alertas */}
-      {lote.estado === "Listo para Pescar" && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-green-800">
-              <AlertCircle className="size-5" />
-              <p>
-                Este lote está listo para ser cosechado.
-                {userRole === "Propietario" &&
-                  ' Dirígete a "Registrar Cosecha".'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {librasDisponibles > 0 && lote.estado === "En Venta" && (
-        <Card className="border-cyan-200 bg-cyan-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-cyan-800">
-              <AlertCircle className="size-5" />
-              <p>
-                Hay {librasDisponibles.toFixed(2)} lb disponibles para venta.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Gráficas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ventas por proveedor */}
-        {ventasPorProveedor.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Ventas por Proveedor</CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={ventasPorProveedor}>
-                  <CartesianGrid strokeDasharray="3 3" />
-
-                  <XAxis
-                    dataKey="proveedor"
-                    angle={-45}
-                    textAnchor="end"
-                    height={100}
-                  />
-
-                  <YAxis />
-
-                  <Tooltip
-                    formatter={(value: number, name: string) => {
-                      if (name === "libras") return `${value.toFixed(2)} lb`;
-                      if (name === "ingresos")
-                        return `$${value.toLocaleString("es-ES")}`;
-                      return value;
-                    }}
-                  />
-
-                  <Bar dataKey="libras" fill="#0891b2" name="Libras" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Inventario */}
-        {lote.libras_cosechadas > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribución de Inventario</CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={inventarioData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(e) => `${e.name}: ${e.value.toFixed(2)} lb`}
-                    outerRadius={80}
-                    dataKey="value"
-                  >
-                    {inventarioData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-
-                  <Tooltip
-                    formatter={(value: number) =>
-                      `${value.toFixed(2)} lb`
-                    }
-                  />
-
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Resumen financiero */}
-      {userRole === "Propietario" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Resumen Financiero</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  Costo de Producción
-                </p>
-                <p className="text-red-600">
-                  $
-                  {lote.costo_produccion.toLocaleString("es-ES", {
-                    minimumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  Ingresos Totales
-                </p>
-                <p className="text-green-600">
-                  $
-                  {lote.ingresos_totales.toLocaleString("es-ES", {
-                    minimumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  Ganancia Neta
-                </p>
-                <p
-                  className={
-                    gananciaBruta >= 0
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }
-                >
-                  $
-                  {gananciaBruta.toLocaleString("es-ES", {
-                    minimumFractionDigits: 2,
-                  })}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Transacciones */}
+      {/* TRANSACCIONES */}
       <Card>
         <CardHeader>
           <CardTitle>Historial de Transacciones</CardTitle>
         </CardHeader>
-
         <CardContent>
           <TransactionTable ventas={ventas} cosechas={cosechas} />
         </CardContent>
