@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Plus } from "lucide-react";
 import { UsuariosTable } from "./UsuariosTable";
@@ -29,9 +34,9 @@ export function UsuariosPanel() {
     active: true,
   });
 
-  // ----------------------
-  // Cargar usuarios
-  // ----------------------
+  // ======================================================
+  // 📌 CARGAR USUARIOS
+  // ======================================================
   const fetchUsuarios = async () => {
     const { data, error } = await supabase.from("users").select("*");
 
@@ -43,13 +48,29 @@ export function UsuariosPanel() {
     setUsuarios(data);
   };
 
+  // ======================================================
+  // 🔥 REALTIME (se actualiza solo como proveedores)
+  // ======================================================
   useEffect(() => {
     fetchUsuarios();
+
+    const channel = supabase
+      .channel("realtime:users")
+      .on(
+        "postgres_changes",
+        { event: "*", table: "users", schema: "public" },
+        () => fetchUsuarios()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  // ----------------------
-  // Crear usuario
-  // ----------------------
+  // ======================================================
+  // 🟢 CREAR USUARIO
+  // ======================================================
   const onCreateUsuario = async () => {
     const { error } = await supabase.from("users").insert(formData);
 
@@ -59,12 +80,11 @@ export function UsuariosPanel() {
     }
 
     setShowForm(false);
-    fetchUsuarios();
   };
 
-  // ----------------------
-  // Editar usuario
-  // ----------------------
+  // ======================================================
+  // 🟡 EDITAR USUARIO
+  // ======================================================
   const onUpdateUsuario = async () => {
     if (!editingUser) return;
 
@@ -80,12 +100,11 @@ export function UsuariosPanel() {
 
     setEditingUser(null);
     setShowForm(false);
-    fetchUsuarios();
   };
 
-  // ----------------------
-  // Eliminar usuario
-  // ----------------------
+  // ======================================================
+  // 🔴 ELIMINAR USUARIO
+  // ======================================================
   const onDeleteUsuario = async (id: string) => {
     const { error } = await supabase.from("users").delete().eq("id", id);
 
@@ -93,13 +112,11 @@ export function UsuariosPanel() {
       alert("Error eliminando usuario: " + error.message);
       return;
     }
-
-    fetchUsuarios();
   };
 
-  // ----------------------
-  // Abrir modal de edición
-  // ----------------------
+  // ======================================================
+  // 📌 Abrir modal para editar
+  // ======================================================
   const openEdit = (u: Usuario) => {
     setEditingUser(u);
     setFormData({
@@ -113,9 +130,9 @@ export function UsuariosPanel() {
     setShowForm(true);
   };
 
-  // ----------------------
-  // Reset formulario
-  // ----------------------
+  // ======================================================
+  // 📌 Abrir modal para crear
+  // ======================================================
   const openCreate = () => {
     setEditingUser(null);
     setFormData({
@@ -142,7 +159,11 @@ export function UsuariosPanel() {
       </div>
 
       {/* Tabla */}
-      <UsuariosTable usuarios={usuarios} onEdit={openEdit} onDelete={onDeleteUsuario} />
+      <UsuariosTable
+        usuarios={usuarios}
+        onEdit={openEdit}
+        onDelete={onDeleteUsuario}
+      />
 
       {/* Modal */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -153,7 +174,7 @@ export function UsuariosPanel() {
             </DialogTitle>
           </DialogHeader>
 
-          {/* FORM */}
+          {/* FORMULARIO */}
           <div className="space-y-4">
             <input
               className="border p-2 w-full rounded"
