@@ -31,8 +31,9 @@ import { AdministracionPanel } from "./components/AdministracionPanel";
 import { LoginForm } from "./components/LoginForm";
 import { supabase } from "@/lib/supabase";
 
+
 // ====================
-// Tipos
+// TIPOS
 // ====================
 export type EstadoLote =
   | "Crianza"
@@ -49,17 +50,13 @@ export type UserRole =
 
 export interface Usuario {
   id: string;
-  nombre: string;      // mapea a "name"
+  nombre: string;
   username: string;
   email?: string;
   password: string;
-  rol: UserRole;       // mapea a "role"
-  activo: boolean;     // mapea a "active"
+  rol: UserRole;
+  activo: boolean;
 }
-
-// NOTA: este tipo mezcla lo que viene de la vista (snake_case)
-// y alias en camelCase / sin guión bajo para que otros componentes sigan funcionando.
-
 
 export interface Lote {
   id: string;
@@ -70,12 +67,9 @@ export interface Lote {
   estado: EstadoLote;
   costo_produccion: number;
 
-  // Campos calculados por la vista (snake_case reales)
   libras_cosechadas: number;
   libras_vendidas: number;
   ingresos_totales: number;
-
-  
 }
 
 export interface Cosecha {
@@ -83,8 +77,8 @@ export interface Cosecha {
   loteId: string;
   fecha: string;
   libras: number;
-  pescador_id: string;  // UUID correcto
-  pescador_nombre: string; // nombre visible
+  pescador_id: string;
+  pescador_nombre: string;
 }
 
 export interface Venta {
@@ -122,7 +116,12 @@ export interface Vendedor {
   activo: boolean;
 }
 
+
+// ====================
+// APP
+// ====================
 export default function App() {
+
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [lotes, setLotes] = useState<Lote[]>([]);
@@ -137,8 +136,10 @@ export default function App() {
 
   const selectedLote = lotes.find((l) => l.id === selectedLoteId) || null;
 
+
+
   // ====================
-  // FETCH: LOTES  (vista lotes_dashboard_view)
+  // FETCH: LOTES
   // ====================
   const fetchLotes = async () => {
     const { data, error } = await supabase
@@ -146,30 +147,48 @@ export default function App() {
       .select("*")
       .order("fecha_inicio", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando lotes:", error);
-      return;
-    }
+    if (error) return;
 
-    const mapped: Lote[] = data?.map((row: any) => ({
-      id: row.id,
-      nombre: row.nombre,
-      fecha_inicio: row.fecha_inicio,
-      fecha_estimada_pesca: row.fecha_estimada_pesca,
-      tipo_camaron: row.tipo_camaron,
-      estado: row.estado,
-      costo_produccion: Number(row.costo_produccion) || 0,
-      libras_cosechadas: Number(row.libras_cosechadas) || 0,
-      libras_vendidas: Number(row.libras_vendidas) || 0,
-      ingresos_totales: Number(row.ingresos_totales) || 0,
-    })) ?? [];
-
-    setLotes(mapped);
-
-    if (!selectedLoteId && mapped.length > 0) {
-      setSelectedLoteId(mapped[0].id);
-    }
+    setLotes(
+      (data ?? []).map((row: any) => ({
+        id: row.id,
+        nombre: row.nombre,
+        fecha_inicio: row.fecha_inicio,
+        fecha_estimada_pesca: row.fecha_estimada_pesca,
+        tipo_camaron: row.tipo_camaron,
+        estado: row.estado,
+        costo_produccion: Number(row.costo_produccion) || 0,
+        libras_cosechadas: Number(row.libras_cosechadas) || 0,
+        libras_vendidas: Number(row.libras_vendidas) || 0,
+        ingresos_totales: Number(row.ingresos_totales) || 0,
+      }))
+    );
   };
+
+
+  // ====================
+  // FETCH: COSECHAS (CORREGIDO)
+  // ====================
+  const fetchCosechas = async () => {
+    const { data, error } = await supabase
+      .from("cosechas")
+      .select("id, lote_id, fecha, libras, pescador_id, pescador_nombre")
+      .order("fecha", { ascending: false });
+
+    if (error) return;
+
+    setCosechas(
+      (data ?? []).map((row: any) => ({
+        id: row.id,
+        loteId: row.lote_id,
+        fecha: row.fecha,
+        libras: Number(row.libras),
+        pescador_id: row.pescador_id,
+        pescador_nombre: row.pescador_nombre ?? "",
+      }))
+    );
+  };
+
 
   // ====================
   // FETCH: VENTAS
@@ -177,128 +196,60 @@ export default function App() {
   const fetchVentas = async () => {
     const { data, error } = await supabase
       .from("ventas")
-      .select(
-        `
-        id,
-        lote_id,
-        fecha,
-        libras,
-        precio_libra,
-        proveedor_nombre,
-        vendedor_nombre
-      `
-      )
+      .select("id, lote_id, fecha, libras, precio_libra, proveedor_nombre, vendedor_nombre")
       .order("fecha", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando ventas:", error);
-      setVentas([]);
-      return;
-    }
+    if (error) return;
 
-    const mapped: Venta[] =
-      data?.map((row: any) => ({
+    setVentas(
+      (data ?? []).map((row: any) => ({
         id: row.id,
         loteId: row.lote_id,
         fecha: row.fecha,
-        libras: Number(row.libras) || 0,
-        precioLibra: Number(row.precio_libra) || 0,
+        libras: Number(row.libras),
+        precioLibra: Number(row.precio_libra),
         proveedor: row.proveedor_nombre ?? "",
         vendedor: row.vendedor_nombre ?? "",
-      })) ?? [];
-
-    setVentas(mapped);
+      }))
+    );
   };
 
+
   // ====================
-  // FETCH: PROVEEDORES
+  // FETCH MISC
   // ====================
   const fetchProveedores = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("proveedores")
-      .select("id, nombre, contacto, telefono, email, activo")
+      .select("*")
       .order("nombre");
 
-    if (error) {
-      console.error("Error cargando proveedores:", error);
-      return;
-    }
-
-    setProveedores(
-      (data ?? []).map((p: any) => ({
-        id: p.id,
-        nombre: p.nombre,
-        contacto: p.contacto ?? "",
-        telefono: p.telefono ?? "",
-        email: p.email ?? "",
-        activo: p.activo ?? true,
-      }))
-    );
+    setProveedores(data ?? []);
   };
 
-  // ====================
-  // FETCH: PESCADORES
-  // ====================
   const fetchPescadores = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("pescadores")
-      .select("id, nombre, telefono, especialidad, activo")
+      .select("*")
       .order("nombre");
 
-    if (error) {
-      console.error("Error cargando pescadores:", error);
-      return;
-    }
-
-    setPescadores(
-      (data ?? []).map((p: any) => ({
-        id: p.id,
-        nombre: p.nombre,
-        telefono: p.telefono ?? "",
-        especialidad: p.especialidad ?? "",
-        activo: p.activo ?? true,
-      }))
-    );
+    setPescadores(data ?? []);
   };
 
-  // ====================
-  // FETCH: VENDEDORES
-  // ====================
   const fetchVendedores = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("vendedores")
-      .select("id, nombre, telefono, email, activo")
+      .select("*")
       .order("nombre");
 
-    if (error) {
-      console.error("Error cargando vendedores:", error);
-      return;
-    }
-
-    setVendedores(
-      (data ?? []).map((v: any) => ({
-        id: v.id,
-        nombre: v.nombre,
-        telefono: v.telefono ?? "",
-        email: v.email ?? "",
-        activo: v.activo ?? true,
-      }))
-    );
+    setVendedores(data ?? []);
   };
 
-  // ====================
-  // FETCH: USUARIOS (tabla users)
-  // ====================
   const fetchUsuarios = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("users")
-      .select("id, name, username, email, role, active")
+      .select("*")
       .order("name");
-
-    if (error) {
-      console.error("Error cargando usuarios:", error);
-      return;
-    }
 
     setUsuarios(
       (data ?? []).map((u: any) => ({
@@ -307,35 +258,12 @@ export default function App() {
         username: u.username,
         email: u.email ?? "",
         password: "",
-        rol: u.role as UserRole,
-        activo: u.active ?? true,
+        rol: u.role,
+        activo: u.active,
       }))
     );
   };
-  // FETCH COSECHAS
-  // ====================
-  const fetchCosechas = async () => {
-  const { data, error } = await supabase
-    .from("cosechas")
-    .select("id, lote_id, fecha, libras, pescador_nombre")
-    .order("fecha", { ascending: false });
 
-  if (error) {
-    console.error("Error cargando cosechas:", error);
-    return;
-  }
-
-  const mapped: Cosecha[] = (data ?? []).map((row: any) => ({
-    id: row.id,
-    loteId: row.lote_id,
-    fecha: row.fecha,
-    libras: Number(row.libras) || 0,
-    pescador_id: row.pescador_id,
-pescador_nombre: row.pescador_nombre ?? "",
-  }));
-
-  setCosechas(mapped);
-};
 
   // ====================
   // FETCH ALL
@@ -343,15 +271,15 @@ pescador_nombre: row.pescador_nombre ?? "",
   const fetchAll = async () => {
     await Promise.all([
       fetchLotes(),
+      fetchCosechas(),
       fetchVentas(),
       fetchProveedores(),
       fetchPescadores(),
       fetchVendedores(),
       fetchUsuarios(),
-      fetchCosechas(), // ← NECESARIO
     ]);
-
   };
+
 
   // ====================
   // REALTIME
@@ -375,33 +303,7 @@ pescador_nombre: row.pescador_nombre ?? "",
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table },
-          () => {
-            switch (table) {
-              case "lotes":
-                fetchLotes();
-                break;
-              case "ventas":
-                fetchVentas();
-                fetchLotes(); // para refrescar totales de la vista
-                break;
-              case "cosechas":
-                  fetchCosechas();
-                fetchLotes();
-                break;
-              case "proveedores":
-                fetchProveedores();
-                break;
-              case "pescadores":
-                fetchPescadores();
-                break;
-              case "vendedores":
-                fetchVendedores();
-                break;
-              case "users":
-                fetchUsuarios();
-                break;
-            }
-          }
+          () => fetchAll()
         )
         .subscribe()
     );
@@ -409,17 +311,14 @@ pescador_nombre: row.pescador_nombre ?? "",
     return () => {
       channels.forEach((ch) => supabase.removeChannel(ch));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
   // ====================
-  // AUTH
+  // LOGIN
   // ====================
   const handleLogin = (user: Usuario) => {
     setCurrentUser(user);
-    if (lotes.length > 0 && !selectedLoteId) {
-      setSelectedLoteId(lotes[0].id);
-    }
   };
 
   const handleLogout = () => {
@@ -427,552 +326,189 @@ pescador_nombre: row.pescador_nombre ?? "",
     setSelectedLoteId(null);
   };
 
-  // ====================
-  // CRUD LOTES
-  // ====================
-  const handleCreateLote = async (loteData: {
-    nombre: string;
-    fecha_inicio: string;
-    fecha_estimada_pesca: string;
-    tipo_camaron: string;
-    estado: EstadoLote;
-    costo_produccion: number;
-  }) => {
-    const { error } = await supabase.from("lotes").insert({
-      nombre: loteData.nombre,
-      fecha_inicio: loteData.fecha_inicio,
-      fecha_estimada_pesca: loteData.fecha_estimada_pesca,
-      tipo_camaron: loteData.tipo_camaron,
-      estado: loteData.estado,
-      costo_produccion: loteData.costo_produccion,
-    });
-
-    if (error) {
-      alert("Error creando lote: " + error.message);
-      return;
-    }
-
-    setShowLoteForm(false);
-  };
-
-const handleDeleteLote = async (loteId: string) => {
-  const { error } = await supabase.from("lotes").delete().eq("id", loteId);
-
-  if (error) {
-    alert("Error eliminando lote: " + error.message);
-    return;
-  }
-
-  // Quitar de estado local
-  setLotes(prev => prev.filter(l => l.id !== loteId));
-
-  // Si el lote eliminado era el seleccionado → reset
-  setSelectedLoteId(null);
-
-  // Recargar vistas relacionadas
-  fetchVentas();
-  fetchLotes();
-};
-
-  const handleUpdateLoteEstado = async (loteId: string, estado: EstadoLote) => {
-  const { error } = await supabase
-    .from("lotes")
-    .update({ estado })
-    .eq("id", loteId);
-
-  if (error) {
-    alert("Error actualizando estado: " + error.message);
-    return;
-  }
-
-  setLotes(prev =>
-    prev.map(l => (l.id === loteId ? { ...l, estado } : l))
-  );
-};
-
-
-  const handleUpdateFechaPesca = async (loteId: string, nuevaFecha: string) => {
-    const { error } = await supabase
-      .from("lotes")
-      .update({ fecha_estimada_pesca: nuevaFecha })
-      .eq("id", loteId);
-
-    if (error) {
-      alert("Error actualizando fecha estimada de pesca: " + error.message);
-      return;
-    }
-
-    setLotes((prev) =>
-      prev.map((l) =>
-        l.id === loteId ? { ...l, fecha_estimada_pesca: nuevaFecha } : l
-      )
-    );
-  };
 
   // ====================
-  // COSECHAS (inserta en tabla cosechas)
+  // REGISTRAR COSECHA (CORREGIDO COMPLETO)
   // ====================
   const handleRegistrarCosecha = async (cosechaData: {
-  loteId: string;
-  fecha: string;
-  libras: number;
-  pescador_id: string;
-}) => {
-  const pescador = pescadores.find(p => p.id === cosechaData.pescador_id);
+    loteId: string;
+    fecha: string;
+    libras: number;
+    pescador_id: string;
+  }) => {
 
-  const { data, error } = await supabase
-    .from("cosechas")
-    .insert({
-      lote_id: cosechaData.loteId,
-      fecha: cosechaData.fecha,
-      libras: cosechaData.libras,
-      pescador_id: cosechaData.pescador_id,
-      pescador_nombre: pescador?.nombre ?? null,
-    })
-    .select()
-    .single();
+    const pescador = pescadores.find(p => p.id === cosechaData.pescador_id);
 
-  if (error) {
-    alert("Error registrando cosecha: " + error.message);
-    return;
-  }
-
-  await supabase
-    .from("lotes")
-    .update({ estado: "En Venta" })
-    .eq("id", cosechaData.loteId);
-
-  setCosechas(prev => [
-  ...prev,
-  {
-    id: data.id,
-    loteId: cosechaData.loteId,
-    fecha: cosechaData.fecha,
-    libras: cosechaData.libras,
-    pescador_id: cosechaData.pescador_id,
-    pescador_nombre: pescador?.nombre ?? "",
-  }
-]);
-
-
-  // ====================
-  // VENTAS
-  // ====================
-  const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
-    const proveedorEncontrado = proveedores.find(
-      (p) => p.nombre === ventaData.proveedor
-    );
-    const vendedorEncontrado = vendedores.find(
-      (v) => v.nombre === ventaData.vendedor
-    );
-
-    const { error } = await supabase.from("ventas").insert({
-      lote_id: ventaData.loteId,
-      fecha: ventaData.fecha,
-      libras: ventaData.libras,
-      precio_libra: ventaData.precioLibra,
-      proveedor_id: proveedorEncontrado?.id ?? null,
-      proveedor_nombre: ventaData.proveedor,
-      vendedor_id: vendedorEncontrado?.id ?? null,
-      vendedor_nombre: ventaData.vendedor,
-    });
-
-    if (error) {
-      alert("Error registrando venta: " + error.message);
-      return;
-    }
-
-    await fetchVentas();
-    await fetchLotes();
-  };
-
-  // ====================
-  // CRUD Proveedor / Pescador / Vendedor
-  // ====================
-  const handleCreateProveedor = async (proveedorData: Omit<Proveedor, "id">) => {
-    await supabase.from("proveedores").insert({
-      nombre: proveedorData.nombre,
-      contacto: proveedorData.contacto,
-      telefono: proveedorData.telefono,
-      email: proveedorData.email,
-      activo: proveedorData.activo,
-    });
-  };
-
-  const handleUpdateProveedor = async (
-    id: string,
-    proveedorData: Omit<Proveedor, "id">
-  ) => {
-    await supabase.from("proveedores").update(proveedorData).eq("id", id);
-  };
-
-  const handleDeleteProveedor = async (id: string) => {
-    await supabase.from("proveedores").delete().eq("id", id);
-  };
-
-  const handleCreatePescador = async (pescadorData: Omit<Pescador, "id">) => {
-    await supabase.from("pescadores").insert(pescadorData);
-  };
-
-  const handleUpdatePescador = async (
-    id: string,
-    pescadorData: Omit<Pescador, "id">
-  ) => {
-    await supabase.from("pescadores").update(pescadorData).eq("id", id);
-  };
-
-  const handleDeletePescador = async (id: string) => {
-    await supabase.from("pescadores").delete().eq("id", id);
-  };
-
-  const handleCreateVendedor = async (vendedorData: Omit<Vendedor, "id">) => {
-    await supabase.from("vendedores").insert(vendedorData);
-  };
-
-  const handleUpdateVendedor = async (
-    id: string,
-    vendedorData: Omit<Vendedor, "id">
-  ) => {
-    await supabase.from("vendedores").update(vendedorData).eq("id", id);
-  };
-
-  const handleDeleteVendedor = async (id: string) => {
-    await supabase.from("vendedores").delete().eq("id", id);
-  };
-
-  // ====================
-  // CRUD USUARIOS (tabla users)
-  // ====================
-  const handleCreateUsuario = async (data: Omit<Usuario, "id">) => {
-    const { error } = await supabase.from("users").insert({
-      name: data.nombre,
-      username: data.username,
-      email: data.email ?? "",
-      password: data.password,
-      role: data.rol,
-      active: data.activo,
-    });
-
-    if (error) {
-      alert("Error creando usuario: " + error.message);
-      return;
-    }
-
-    fetchUsuarios();
-  };
-
-  const handleUpdateUsuario = async (
-    id: string,
-    data: Omit<Usuario, "id">
-  ) => {
-    const { error } = await supabase
-      .from("users")
-      .update({
-        name: data.nombre,
-        username: data.username,
-        email: data.email ?? "",
-        password: data.password,
-        role: data.rol,
-        active: data.activo,
+    const { data, error } = await supabase
+      .from("cosechas")
+      .insert({
+        lote_id: cosechaData.loteId,
+        fecha: cosechaData.fecha,
+        libras: cosechaData.libras,
+        pescador_id: cosechaData.pescador_id,
+        pescador_nombre: pescador?.nombre ?? null,
       })
-      .eq("id", id);
+      .select()
+      .single();
 
     if (error) {
-      alert("Error actualizando usuario: " + error.message);
+      alert("Error registrando cosecha: " + error.message);
       return;
     }
 
-    fetchUsuarios();
+    await supabase
+      .from("lotes")
+      .update({ estado: "En Venta" })
+      .eq("id", cosechaData.loteId);
+
+    setCosechas(prev => [
+      ...prev,
+      {
+        id: data.id,
+        loteId: cosechaData.loteId,
+        fecha: cosechaData.fecha,
+        libras: cosechaData.libras,
+        pescador_id: cosechaData.pescador_id,
+        pescador_nombre: pescador?.nombre ?? "",
+      }
+    ]);
   };
 
-  const handleDeleteUsuario = async (id: string) => {
-    const { error } = await supabase.from("users").delete().eq("id", id);
-
-    if (error) {
-      alert("Error eliminando usuario: " + error.message);
-      return;
-    }
-
-    fetchUsuarios();
-  };
 
   // ====================
   // UI LOGIN
   // ====================
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-br from-cyan-500 to-teal-500 p-3 rounded-full">
-              <Waves className="size-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-center text-cyan-900 mb-2">Sistema GELCA</h1>
-          <p className="text-center text-gray-600 mb-8">
-            Gestión de Camarones por Lotes
-          </p>
-          <LoginForm onLogin={handleLogin} />
-        </div>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+        <LoginForm onLogin={handleLogin} />
       </div>
     );
   }
 
+
   // ====================
-  // UI PARA PESCADOR
+  // UI PESCADOR
   // ====================
   if (currentUser.rol === "Pescador") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
-        <header className="bg-white border-b border-gray-200 shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-cyan-500 to-teal-500 p-2 rounded-lg">
-                <Waves className="size-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-cyan-900">GELCA</h1>
-                <p className="text-sm text-gray-600">
-                  {currentUser.nombre} - Pescador
-                </p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="mr-2 size-4" />
-              Cerrar Sesión
-            </Button>
-          </div>
-        </header>
-
-        <main className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-cyan-900 mb-6">Registrar Cosecha</h2>
-            <CosechaForm
-              lotes={lotes.filter((l) => l.estado === "Listo para Pescar")}
-              onSubmit={handleRegistrarCosecha}
-              pescadores={pescadores.filter((p) => p.activo)}
-              pescadorId={currentUser.id}
-            />
-          </div>
-        </main>
+      <div className="min-h-screen bg-gray-100 p-6">
+        <CosechaForm
+          lotes={lotes.filter(l => l.estado === "Listo para Pescar")}
+          pescadores={pescadores}
+          pescadorId={currentUser.id}
+          onSubmit={handleRegistrarCosecha}
+        />
       </div>
     );
   }
+
 
   // ====================
   // UI GENERAL
   // ====================
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-cyan-500 to-teal-500 p-2 rounded-lg">
-                <Waves className="size-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-cyan-900">Sistema GELCA</h1>
-                <p className="text-sm text-gray-600">
-                  {currentUser.nombre} - {currentUser.rol}
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-4">
-              {currentUser.rol !== "Vendedor" && (
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-700">Lote:</label>
-                  <Select
-                    value={selectedLoteId || ""}
-                    onValueChange={setSelectedLoteId}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Seleccionar lote" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {lotes.map((lote) => (
-                        <SelectItem key={lote.id} value={lote.id}>
-                          {lote.id} - {lote.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="mr-2 size-4" />
-                Cerrar Sesión
-              </Button>
+      {/* HEADER */}
+      <header className="bg-white shadow">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Waves className="size-7 text-cyan-600" />
+            <div>
+              <h1 className="text-cyan-900 font-bold">Sistema GELCA</h1>
+              <p className="text-gray-600 text-sm">{currentUser.nombre} - {currentUser.rol}</p>
             </div>
           </div>
+
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 size-4" />
+            Cerrar Sesión
+          </Button>
         </div>
       </header>
 
+
+      {/* MAIN */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs
-          defaultValue={
-            currentUser.rol === "Administrador"
-              ? "dashboard-anual"
-              : currentUser.rol === "Vendedor"
-              ? "venta"
-              : "dashboard"
-          }
-          className="space-y-6"
-        >
+
+        <Tabs defaultValue="dashboard" className="space-y-6">
+
           <TabsList className="bg-white">
-            {currentUser.rol === "Administrador" && (
-              <TabsTrigger value="dashboard-anual">
-                Dashboard Anual
-              </TabsTrigger>
-            )}
-
-            {currentUser.rol !== "Vendedor" && (
-              <>
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="lotes">Gestión de Lotes</TabsTrigger>
-              </>
-            )}
-
-            {currentUser.rol === "Propietario" && (
-              <TabsTrigger value="cosecha">Registrar Cosecha</TabsTrigger>
-            )}
-
-            {(currentUser.rol === "Vendedor" ||
-              currentUser.rol === "Propietario" ||
-              currentUser.rol === "Administrador") && (
-              <TabsTrigger value="venta">Registrar Venta</TabsTrigger>
-            )}
-
-            {(currentUser.rol === "Propietario" ||
-              currentUser.rol === "Administrador") && (
-              <TabsTrigger value="administracion">Administración</TabsTrigger>
-            )}
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="cosecha">Registrar Cosecha</TabsTrigger>
+            <TabsTrigger value="lotes">Gestión de Lotes</TabsTrigger>
           </TabsList>
 
-          {currentUser.rol === "Administrador" && (
-            <TabsContent value="dashboard-anual">
-              <DashboardAnual lotes={lotes} ventas={ventas} />
-            </TabsContent>
-          )}
 
-          {currentUser.rol !== "Vendedor" && (
-            <>
-              <TabsContent value="dashboard">
-                {selectedLote ? (
-                  <Dashboard
-  lote={selectedLote}
-  ventas={ventas.filter(v => v.loteId === selectedLote.id)}
-  cosechas={cosechas.filter(c => c.loteId === selectedLote.id)}
-  userRole={currentUser.rol}
-  onUpdateEstado={handleUpdateLoteEstado}
-  onUpdateFechaPesca={handleUpdateFechaPesca}
-  onDeleteLote={handleDeleteLote}   //  
-/>
-
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-600">
-                      Selecciona un lote para ver su dashboard
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="lotes">
-                <div className="space-y-4">
-                  {(currentUser.rol === "Propietario" ||
-                    currentUser.rol === "Administrador") && (
-                    <div className="flex justify-end">
-                      <Dialog
-                        open={showLoteForm}
-                        onOpenChange={setShowLoteForm}
-                      >
-                        <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-                            Crear Nuevo Lote
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Crear Nuevo Lote</DialogTitle>
-                          </DialogHeader>
-                          <LoteForm onSubmit={handleCreateLote} />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  )}
-
-                  <LotesList
-                    lotes={lotes}
-                    onSelectLote={setSelectedLoteId}
-                    selectedLoteId={selectedLoteId}
-                  />
-                </div>
-              </TabsContent>
-            </>
-          )}
-
-          {currentUser.rol === "Propietario" && (
-            <TabsContent value="cosecha">
-              <div className="max-w-2xl mx-auto">
-                <CosechaForm
-                  lotes={lotes.filter((l) => l.estado === "Listo para Pescar")}
-                  onSubmit={handleRegistrarCosecha}
-                  pescadores={pescadores.filter((p) => p.activo)}
-                  pescadorId={currentUser.id}
-                />
-              </div>
-            </TabsContent>
-          )}
-
-          {(currentUser.rol === "Vendedor" ||
-            currentUser.rol === "Propietario" ||
-            currentUser.rol === "Administrador") && (
-            <TabsContent value="venta">
-              <div className="max-w-2xl mx-auto">
-                <VentaForm
-                  lotes={lotes.filter(
-                    (l) =>
-                      l.estado === "En Venta" &&
-                      l.libras_cosechadas - l.libras_vendidas > 0
-                  )}
-                  onSubmit={handleRegistrarVenta}
-                  proveedores={proveedores.filter((p) => p.activo)}
-                  vendedores={vendedores.filter((v) => v.activo)}
-                  vendedorNombre={currentUser.nombre}
-                  onCreateProveedor={handleCreateProveedor}
-                />
-              </div>
-            </TabsContent>
-          )}
-
-          {(currentUser.rol === "Propietario" ||
-            currentUser.rol === "Administrador") && (
-            <TabsContent value="administracion">
-              <AdministracionPanel
-                proveedores={proveedores}
-                pescadores={pescadores}
-                vendedores={vendedores}
-                usuarios={usuarios}
-                onCreateProveedor={handleCreateProveedor}
-                onUpdateProveedor={handleUpdateProveedor}
-                onDeleteProveedor={handleDeleteProveedor}
-                onCreatePescador={handleCreatePescador}
-                onUpdatePescador={handleUpdatePescador}
-                onDeletePescador={handleDeletePescador}
-                onCreateVendedor={handleCreateVendedor}
-                onUpdateVendedor={handleUpdateVendedor}
-                onDeleteVendedor={handleDeleteVendedor}
-                onCreateUsuario={handleCreateUsuario}
-                onUpdateUsuario={handleUpdateUsuario}
-                onDeleteUsuario={handleDeleteUsuario}
+          {/* DASHBOARD */}
+          <TabsContent value="dashboard">
+            {selectedLote ? (
+              <Dashboard
+                lote={selectedLote}
+                ventas={ventas.filter(v => v.loteId === selectedLote.id)}
+                cosechas={cosechas.filter(c => c.loteId === selectedLote.id)}
                 userRole={currentUser.rol}
               />
-            </TabsContent>
-          )}
+            ) : (
+              <div className="bg-white p-8 rounded shadow text-center">
+                Selecciona un lote para ver su dashboard.
+              </div>
+            )}
+          </TabsContent>
+
+
+          {/* REGISTRAR COSECHA */}
+          <TabsContent value="cosecha">
+            <div className="max-w-2xl mx-auto">
+              <CosechaForm
+                lotes={lotes.filter(l => l.estado === "Listo para Pescar")}
+                pescadores={pescadores}
+                pescadorId={currentUser.id}
+                onSubmit={handleRegistrarCosecha}
+              />
+            </div>
+          </TabsContent>
+
+
+          {/* LOTES */}
+          <TabsContent value="lotes">
+            <div className="space-y-4">
+
+              <div className="flex justify-end">
+                <Dialog open={showLoteForm} onOpenChange={setShowLoteForm}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-cyan-600 text-white">
+                      Crear Nuevo Lote
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Crear Nuevo Lote</DialogTitle>
+                    </DialogHeader>
+
+                    <LoteForm
+                      onSubmit={async (data) => {
+                        await supabase.from("lotes").insert(data);
+                        setShowLoteForm(false);
+                      }}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              <LotesList
+                lotes={lotes}
+                selectedLoteId={selectedLoteId}
+                onSelectLote={setSelectedLoteId}
+              />
+
+            </div>
+          </TabsContent>
+
         </Tabs>
+
       </main>
     </div>
   );
