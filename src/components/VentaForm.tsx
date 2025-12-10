@@ -10,7 +10,6 @@ import {
   SelectValue,
   SelectItem,
 } from "./ui/select";
-
 import { AlertCircle } from "lucide-react";
 
 import { Lote, Proveedor, Vendedor } from "../App";
@@ -21,10 +20,10 @@ interface Props {
   vendedores: Vendedor[];
   vendedorNombre: string;
   onSubmit: (data: {
-    lote_id: string;
+    loteId: string;
     fecha: string;
     libras: number;
-    precio_libra: number;
+    precioLibra: number;
     proveedor: string;
     vendedor: string;
   }) => void;
@@ -38,24 +37,25 @@ export function VentaForm({
   onSubmit,
 }: Props) {
   const [form, setForm] = useState({
-    lote_id: "",
+    loteId: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
-    precio_libra: 3.5,
+    precioLibra: 3.5,
     proveedor: "",
     vendedor: vendedorNombre,
   });
 
-  // Buscar lote seleccionado
-  const selected = lotes.find((l) => l.id === form.lote_id);
+  const selected = lotes.find((l) => l.id === form.loteId);
 
-  // Inventario calculado desde App.tsx
-  const inventario = Number(selected?.libras_en_inventario ?? 0);
+  // inventario = libras_cosechadas - libras_vendidas
+  const inventario = selected
+    ? (selected.libras_cosechadas ?? 0) - (selected.libras_vendidas ?? 0)
+    : 0;
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.lote_id) {
+    if (!form.loteId) {
       alert("Debes seleccionar un lote.");
       return;
     }
@@ -70,10 +70,17 @@ export function VentaForm({
       return;
     }
 
-    onSubmit(form);
+    onSubmit({
+      loteId: form.loteId,
+      fecha: form.fecha,
+      libras: form.libras,
+      precioLibra: form.precioLibra,
+      proveedor: form.proveedor,
+      vendedor: form.vendedor,
+    });
   };
 
-  // 🟡 SIN LOTES DISPONIBLES
+  // Si no hay lotes en venta, mostramos aviso
   if (lotes.length === 0) {
     return (
       <Card className="border-yellow-300 bg-yellow-50">
@@ -94,18 +101,22 @@ export function VentaForm({
       <div>
         <Label>Lote</Label>
         <Select
-          value={form.lote_id}
-          onValueChange={(v) => setForm({ ...form, lote_id: v })}
+          value={form.loteId}
+          onValueChange={(v) => setForm({ ...form, loteId: v })}
         >
           <SelectTrigger>
             <SelectValue placeholder="Seleccionar lote" />
           </SelectTrigger>
           <SelectContent>
-            {lotes.map((l) => (
-              <SelectItem key={l.id} value={String(l.id)}>
-                {l.nombre} — {l.libras_en_inventario.toFixed(2)} lb disp.
-              </SelectItem>
-            ))}
+            {lotes.map((l) => {
+              const disp =
+                (l.libras_cosechadas ?? 0) - (l.libras_vendidas ?? 0);
+              return (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.nombre} — {disp.toFixed(2)} lb disp.
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -146,26 +157,34 @@ export function VentaForm({
           <Label>Libras</Label>
           <Input
             type="number"
-            step="0.01"
             min={0}
-            max={inventario}
+            step="0.01"
             value={form.libras}
             onChange={(e) =>
-              setForm({ ...form, libras: parseFloat(e.target.value) || 0 })
+              setForm({
+                ...form,
+                libras: parseFloat(e.target.value) || 0,
+              })
             }
           />
+          {selected && (
+            <p className="mt-1 text-xs text-gray-500">
+              Disponible: {inventario.toFixed(2)} lb
+            </p>
+          )}
         </div>
 
         <div>
           <Label>Precio por libra ($)</Label>
           <Input
             type="number"
+            min={0}
             step="0.01"
-            value={form.precio_libra}
+            value={form.precioLibra}
             onChange={(e) =>
               setForm({
                 ...form,
-                precio_libra: parseFloat(e.target.value) || 0,
+                precioLibra: parseFloat(e.target.value) || 0,
               })
             }
           />
@@ -175,7 +194,7 @@ export function VentaForm({
       {/* TOTAL */}
       <div className="bg-cyan-50 border border-cyan-200 p-3 rounded text-right">
         <p className="font-semibold text-cyan-800">
-          Total: ${(form.libras * form.precio_libra).toFixed(2)}
+          Total: ${(form.libras * form.precioLibra).toFixed(2)}
         </p>
       </div>
 
@@ -187,7 +206,7 @@ export function VentaForm({
           onValueChange={(v) => setForm({ ...form, vendedor: v })}
         >
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Seleccionar vendedor" />
           </SelectTrigger>
           <SelectContent>
             {vendedores.map((v) => (
