@@ -453,24 +453,41 @@ export default function App() {
     setShowLoteForm(false);
   };
 
-  const handleUpdateLoteEstado = async (
-    loteId: string,
-    nuevoEstado: EstadoLote
-  ) => {
-    const { error } = await supabase
-      .from("lotes")
-      .update({ estado: nuevoEstado })
-      .eq("id", loteId);
+const handleDeleteLote = async (loteId: string) => {
+  const { error } = await supabase.from("lotes").delete().eq("id", loteId);
 
-    if (error) {
-      alert("Error actualizando estado del lote: " + error.message);
-      return;
-    }
+  if (error) {
+    alert("Error eliminando lote: " + error.message);
+    return;
+  }
 
-    setLotes((prev) =>
-      prev.map((l) => (l.id === loteId ? { ...l, estado: nuevoEstado } : l))
-    );
-  };
+  // Quitar de estado local
+  setLotes(prev => prev.filter(l => l.id !== loteId));
+
+  // Si el lote eliminado era el seleccionado → reset
+  setSelectedLoteId(null);
+
+  // Recargar vistas relacionadas
+  fetchVentas();
+  fetchLotes();
+};
+
+  const handleUpdateLoteEstado = async (loteId: string, estado: EstadoLote) => {
+  const { error } = await supabase
+    .from("lotes")
+    .update({ estado })
+    .eq("id", loteId);
+
+  if (error) {
+    alert("Error actualizando estado: " + error.message);
+    return;
+  }
+
+  setLotes(prev =>
+    prev.map(l => (l.id === loteId ? { ...l, estado } : l))
+  );
+};
+
 
   const handleUpdateFechaPesca = async (loteId: string, nuevaFecha: string) => {
     const { error } = await supabase
@@ -837,17 +854,15 @@ export default function App() {
               <TabsContent value="dashboard">
                 {selectedLote ? (
                   <Dashboard
-                    lote={selectedLote}
-                    ventas={ventas.filter(
-                      (v) => v.loteId === selectedLote.id
-                    )}
-                    cosechas={cosechas.filter(
-                      (c) => c.loteId === selectedLote.id
-                    )}
-                    userRole={currentUser.rol}
-                    onUpdateEstado={handleUpdateLoteEstado}
-                    onUpdateFechaPesca={handleUpdateFechaPesca}
-                  />
+  lote={selectedLote}
+  ventas={ventas.filter(v => v.loteId === selectedLote.id)}
+  cosechas={cosechas.filter(c => c.loteId === selectedLote.id)}
+  userRole={currentUser.rol}
+  onUpdateEstado={handleUpdateLoteEstado}
+  onUpdateFechaPesca={handleUpdateFechaPesca}
+  onDeleteLote={handleDeleteLote}   //  
+/>
+
                 ) : (
                   <div className="bg-white rounded-lg shadow p-8 text-center">
                     <p className="text-gray-600">
