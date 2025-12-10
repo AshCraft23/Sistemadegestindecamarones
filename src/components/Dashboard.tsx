@@ -30,25 +30,6 @@ import { TransactionTable } from "./TransactionTable";
 import { Badge } from "./ui/badge";
 import { useState } from "react";
 
-interface DashboardProps {
-  lote: Lote | null;
-  ventas: Venta[];
-  cosechas: Cosecha[];
-  userRole: UserRole;
-  onUpdateEstado: (id: string, estado: Lote["estado"]) => void;
-  onUpdateFechaPesca: (id: string, nueva: string) => void;
-}
-
-const COLORS = ["#0891b2", "#14b8a6"];
-
-const estadoColors = {
-  Crianza: "bg-blue-100 text-blue-800 border-blue-200",
-  "Listo para Pescar": "bg-green-100 text-green-800 border-green-200",
-  "En Venta": "bg-cyan-100 text-cyan-800 border-cyan-200",
-  Reposo: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  Descarte: "bg-red-100 text-red-800 border-red-200"
-};
-
 export function Dashboard({
   lote,
   ventas,
@@ -56,70 +37,66 @@ export function Dashboard({
   userRole,
   onUpdateEstado,
   onUpdateFechaPesca
-}: DashboardProps) {
+}) {
 
-  // ============================================
-  // 🧨 SI LOTE ES NULL, NO RENDERIZAR DASHBOARD
-  // ============================================
-  if (!lote) {
-    return (
-      <div className="bg-white p-6 rounded shadow text-center text-gray-600">
-        Cargando información del lote…
-      </div>
-    );
-  }
+  if (!lote) return <div>Cargando lote…</div>;
 
-  // Normalización FIJA Y SEGURA
-  const librasCosechadas = Number(lote.librascosechadas ?? lote.libras_cosechadas ?? 0);
-  const librasVendidas = Number(lote.librasvendidas ?? lote.libras_vendidas ?? 0);
-  const costoProduccion = Number(lote.costo_produccion ?? 0);
-  const ingresosTotales = Number(lote.ingresostotales ?? lote.ingresos_totales ?? 0);
+  // =====================
+  // NORMALIZACIÓN SEGURA
+  // =====================
 
-  // Proteger inventario y gráficas
-  const librasDisponibles = Math.max(librasCosechadas - librasVendidas, 0);
+  const fix = (v: any) =>
+    typeof v === "number" && !isNaN(v) && v >= 0 ? v : 0;
 
-  const gananciaBruta = ingresosTotales - costoProduccion;
-  const porcentajeVendido =
-    librasCosechadas > 0 ? (librasVendidas / librasCosechadas) * 100 : 0;
-  const margenGanancia =
-    costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
+  const librasCosechadas = fix(lote.librascosechadas ?? lote.libras_cosechadas);
+  const librasVendidas = fix(lote.librasvendidas ?? lote.libras_vendidas);
+  const costoProduccion = fix(lote.costo_produccion);
+  const ingresosTotales = fix(lote.ingresostotales ?? lote.ingresos_totales);
 
-  // ============================================
-  // 🔒 Proteger ventas: evitar undefined / null
-  // ============================================
-  const ventasLista = Array.isArray(ventas) ? ventas : [];
+  const librasDisponibles = fix(librasCosechadas - librasVendidas);
 
-  const ventasPorProveedor = ventasLista.reduce((acc, venta) => {
-    const libras = Number(venta.libras) || 0;
-    const precio = Number(venta.precioLibra) || 0;
+  const ventasLista = Array.isArray(ventas)
+    ? ventas.filter(v => v && v.libras !== undefined)
+    : [];
 
-    const existente = acc.find((v) => v.proveedor === venta.proveedor);
+  // =====================
+  // VENTAS POR PROVEEDOR
+  // =====================
 
+  const ventasPorProveedor = ventasLista.reduce((acc, v) => {
+    const libras = fix(v.libras);
+    const precio = fix(v.precioLibra);
+
+    const existente = acc.find(a => a.proveedor === v.proveedor);
     if (existente) {
       existente.libras += libras;
       existente.ingresos += libras * precio;
     } else {
       acc.push({
-        proveedor: venta.proveedor || "N/D",
+        proveedor: v.proveedor ?? "N/D",
         libras,
         ingresos: libras * precio
       });
     }
     return acc;
-  }, [] as Array<{ proveedor: string; libras: number; ingresos: number }>);
+  }, []);
 
-  // ============================================
-  // ✔ Inventario protegido
-  // ============================================
+  // =====================
+  // INVENTARIO (ANTI-CRASH)
+  // =====================
+
   const inventarioData = [
-    { name: "Vendido", value: librasVendidas },
-    { name: "Disponible", value: librasDisponibles }
+    { name: "Vendido", value: fix(librasVendidas) },
+    { name: "Disponible", value: fix(librasDisponibles) }
   ];
 
+  const inventarioSeguro =
+    Array.isArray(inventarioData) &&
+    inventarioData.every(i => typeof i.value === "number");
+
   const fechaInicio = new Date(lote.fecha_inicio);
-  const hoy = new Date();
   const diasEnCiclo = Math.floor(
-    (hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24)
+    (Date.now() - fechaInicio.getTime()) / 86400000
   );
 
   const [editandoFecha, setEditandoFecha] = useState(false);
@@ -128,28 +105,25 @@ export function Dashboard({
   return (
     <div className="space-y-6">
 
-      {/* HEADER DEL LOTE */}
+      {/* Header */}
       <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
         <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex justify-between">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <CardTitle className="text-cyan-900">{lote.nombre}</CardTitle>
-                <Badge className={estadoColors[lote.estado]}>
-                  {lote.estado}
-                </Badge>
+              <div className="flex items-center gap-3">
+                <CardTitle>{lote.nombre}</CardTitle>
+                <Badge>{lote.estado}</Badge>
               </div>
 
-              <div className="flex items-center gap-6 text-sm text-gray-600">
+              <div className="flex gap-4 text-sm text-gray-600 mt-2">
                 <span>ID: {lote.id}</span>
-
                 <span>Tipo: {lote.tipo_camaron}</span>
-
                 <span>
-                  Inicio: {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
+                  Inicio:{" "}
+                  {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
-                {/* FECHA ESTIMADA DE PESCA */}
+                {/* Fecha estimada */}
                 <div className="flex items-center gap-2">
                   <Calendar className="size-4 text-cyan-600" />
 
@@ -185,15 +159,14 @@ export function Dashboard({
                   ) : (
                     <>
                       <span>
-                        {new Date(lote.fecha_estimada_pesca).toLocaleDateString(
-                          "es-ES"
-                        )}
+                        {new Date(
+                          lote.fecha_estimada_pesca
+                        ).toLocaleDateString("es-ES")}
                       </span>
-
                       {userRole === "Administrador" && (
                         <Button
-                          size="sm"
                           variant="ghost"
+                          size="sm"
                           onClick={() => setEditandoFecha(true)}
                         >
                           <Edit2 />
@@ -206,39 +179,6 @@ export function Dashboard({
                 <span>Días en ciclo: {diasEnCiclo}</span>
               </div>
             </div>
-
-            {/* ACCIONES */}
-            {userRole === "Propietario" && (
-              <div className="flex gap-2">
-                {lote.estado === "Crianza" && (
-                  <Button
-                    size="sm"
-                    className="bg-green-600"
-                    onClick={() => onUpdateEstado(lote.id, "Listo para Pescar")}
-                  >
-                    Marcar Listo
-                  </Button>
-                )}
-
-                {lote.estado === "En Venta" && librasDisponibles === 0 && (
-                  <Button
-                    size="sm"
-                    className="bg-yellow-600"
-                    onClick={() => onUpdateEstado(lote.id, "Reposo")}
-                  >
-                    Reposo
-                  </Button>
-                )}
-
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => onUpdateEstado(lote.id, "Descarte")}
-                >
-                  Descartar
-                </Button>
-              </div>
-            )}
           </div>
         </CardHeader>
       </Card>
@@ -247,9 +187,8 @@ export function Dashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Ganancia Bruta"
-          value={`$${gananciaBruta.toFixed(2)}`}
+          value={`$${(ingresosTotales - costoProduccion).toFixed(2)}`}
           icon={<DollarSign />}
-          trend={gananciaBruta >= 0 ? "up" : "down"}
           bgColor="from-green-500 to-emerald-500"
         />
 
@@ -262,7 +201,11 @@ export function Dashboard({
 
         <KPICard
           title="Porcentaje Vendido"
-          value={`${porcentajeVendido.toFixed(1)}%`}
+          value={
+            librasCosechadas > 0
+              ? `${((librasVendidas / librasCosechadas) * 100).toFixed(1)}%`
+              : "0%"
+          }
           icon={<Percent />}
           subtitle={`${librasDisponibles.toFixed(2)} lb disponibles`}
           bgColor="from-teal-500 to-cyan-500"
@@ -270,13 +213,19 @@ export function Dashboard({
 
         <KPICard
           title="Margen de Ganancia"
-          value={`${margenGanancia.toFixed(1)}%`}
+          value={
+            costoProduccion > 0
+              ? `${(((ingresosTotales - costoProduccion) /
+                  costoProduccion) *
+                  100).toFixed(1)}%`
+              : "0%"
+          }
           icon={<TrendingUp />}
           bgColor="from-blue-500 to-indigo-500"
         />
       </div>
 
-      {/* GRÁFICAS */}
+      {/* Gráficas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Ventas por proveedor */}
@@ -304,8 +253,8 @@ export function Dashboard({
           </Card>
         )}
 
-        {/* Inventario */}
-        {Number.isFinite(librasCosechadas) && librasCosechadas > 0 && (
+        {/* INVENTARIO (siempre validado) */}
+        {inventarioSeguro && librasCosechadas > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Inventario</CardTitle>
@@ -318,11 +267,11 @@ export function Dashboard({
                     dataKey="value"
                     cx="50%"
                     cy="50%"
-                    label
                     outerRadius={80}
+                    label
                   >
                     {inventarioData.map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                      <Cell key={idx} fill={["#0891b2", "#14b8a6"][idx]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -334,7 +283,7 @@ export function Dashboard({
         )}
       </div>
 
-      {/* HISTORIAL */}
+      {/* TABLA */}
       <Card>
         <CardHeader>
           <CardTitle>Historial de Transacciones</CardTitle>
