@@ -510,42 +510,49 @@ const handleDeleteLote = async (loteId: string) => {
   // ====================
   // COSECHAS (inserta en tabla cosechas)
   // ====================
-  const handleRegistrarCosecha = async (cosechaData: Omit<Cosecha, "id">) => {
-    const pescadorEncontrado = pescadores.find(
-      (p) => p.nombre === cosechaData.pescador
-    );
+  const handleRegistrarCosecha = async (cosechaData: {
+  loteId: string;
+  fecha: string;
+  libras: number;
+  pescador_id: string;
+}) => {
 
-    const { data, error } = await supabase
-      .from("cosechas")
-      .insert({
-        lote_id: cosechaData.loteId,
-        fecha: cosechaData.fecha,
-        libras: cosechaData.libras,
-        pescador_id: pescadorEncontrado?.id ?? null,
-        pescador_nombre: cosechaData.pescador,
-      })
-      .select()
-      .single();
+  const pescador = pescadores.find(p => p.id === cosechaData.pescador_id);
 
-    if (error) {
-      alert("Error registrando cosecha: " + error.message);
-      return;
+  const { data, error } = await supabase
+    .from("cosechas")
+    .insert({
+      lote_id: cosechaData.loteId,
+      fecha: cosechaData.fecha,
+      libras: cosechaData.libras,
+      pescador_id: cosechaData.pescador_id,
+      pescador_nombre: pescador?.nombre ?? null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    alert("Error registrando cosecha: " + error.message);
+    return;
+  }
+
+  await supabase
+    .from("lotes")
+    .update({ estado: "En Venta" })
+    .eq("id", cosechaData.loteId);
+
+  setCosechas(prev => [
+    ...prev,
+    {
+      id: data.id,
+      loteId: cosechaData.loteId,
+      fecha: cosechaData.fecha,
+      libras: cosechaData.libras,
+      pescador: pescador?.nombre ?? "",
     }
+  ]);
+};
 
-    // marcar lote como En Venta
-    await supabase
-      .from("lotes")
-      .update({ estado: "En Venta" })
-      .eq("id", cosechaData.loteId);
-
-    setCosechas((prev) => [
-      ...prev,
-      {
-        ...cosechaData,
-        id: data?.id ?? `C-${String(prev.length + 1).padStart(3, "0")}`,
-      },
-    ]);
-  };
 
   // ====================
   // VENTAS
