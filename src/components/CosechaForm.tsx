@@ -1,24 +1,22 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectItem,
 } from "./ui/select";
-import { AlertCircle } from "lucide-react";
 import { Lote, Pescador } from "../App";
 
-interface CosechaFormProps {
+interface Props {
   lotes: Lote[];
   pescadores: Pescador[];
   pescadorNombre: string;
   onSubmit: (data: {
-    loteId: string;
+    lote_id: string;
     fecha: string;
     libras: number;
     pescador: string;
@@ -30,154 +28,81 @@ export function CosechaForm({
   pescadores,
   pescadorNombre,
   onSubmit,
-}: CosechaFormProps) {
-  const [formData, setFormData] = useState({
-    loteId: "",
+}: Props) {
+  const [form, setForm] = useState({
+    lote_id: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
     pescador: pescadorNombre,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handle = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!formData.loteId) {
-      alert("Debes seleccionar un lote.");
-      return;
-    }
-
-    if (formData.libras <= 0) {
-      alert("Las libras deben ser mayores a 0.");
-      return;
-    }
-
-    onSubmit(formData);
-
-    setFormData({
-      loteId: "",
-      fecha: new Date().toISOString().split("T")[0],
-      libras: 0,
-      pescador: pescadorNombre,
-    });
+    onSubmit(form);
   };
 
-  // Si no hay lotes listos para pescar
-  if (lotes.length === 0) {
-    return (
-      <Card className="border-yellow-200 bg-yellow-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 text-yellow-800">
-            <AlertCircle className="size-5" />
-            <p>
-              No hay lotes disponibles para cosecha. Solo los lotes con estado
-              "Listo para Pescar" pueden ser cosechados.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Registrar Nueva Cosecha</CardTitle>
-      </CardHeader>
+    <form onSubmit={handle} className="space-y-4 bg-white p-6 rounded-lg shadow">
+      <div>
+        <Label>Lote</Label>
+        <Select
+          value={form.lote_id}
+          onValueChange={(v) => setForm({ ...form, lote_id: v })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar lote" />
+          </SelectTrigger>
+          <SelectContent>
+            {lotes.map((l) => (
+              <SelectItem key={l.id} value={l.id}>
+                {l.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* LOTE */}
-          <div className="space-y-2">
-            <Label htmlFor="lote">Lote</Label>
-            <Select
-              value={formData.loteId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, loteId: value })
-              }
-              required
-            >
-              <SelectTrigger id="lote">
-                <SelectValue placeholder="Seleccionar lote" />
-              </SelectTrigger>
+      <div>
+        <Label>Fecha</Label>
+        <Input
+          type="date"
+          value={form.fecha}
+          onChange={(e) => setForm({ ...form, fecha: e.target.value })}
+        />
+      </div>
 
-              <SelectContent>
-                {lotes.map((lote) => (
-                  <SelectItem key={lote.id} value={lote.id}>
-                    {lote.id} - {lote.nombre} ({lote.tipo_camaron})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div>
+        <Label>Libras</Label>
+        <Input
+          type="number"
+          step="0.01"
+          value={form.libras}
+          onChange={(e) =>
+            setForm({ ...form, libras: parseFloat(e.target.value) || 0 })
+          }
+        />
+      </div>
 
-          {/* FECHA */}
-          <div className="space-y-2">
-            <Label htmlFor="fecha">Fecha de Cosecha</Label>
-            <Input
-              id="fecha"
-              type="date"
-              value={formData.fecha}
-              onChange={(e) =>
-                setFormData({ ...formData, fecha: e.target.value })
-              }
-              required
-            />
-          </div>
+      <div>
+        <Label>Pescador</Label>
+        <Select
+          value={form.pescador}
+          onValueChange={(v) => setForm({ ...form, pescador: v })}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {pescadores.map((p) => (
+              <SelectItem key={p.id} value={p.nombre}>
+                {p.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-          {/* LIBRAS */}
-          <div className="space-y-2">
-            <Label htmlFor="libras">Libras Cosechadas</Label>
-            <Input
-              id="libras"
-              type="number"
-              min="0.01"
-              step="0.01"
-              placeholder="0.00"
-              value={formData.libras || ""}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  libras: parseFloat(e.target.value) || 0,
-                })
-              }
-              required
-            />
-            <p className="text-xs text-gray-500">
-              Ingresa la cantidad total de libras cosechadas
-            </p>
-          </div>
-
-          {/* PESCADOR */}
-          <div className="space-y-2">
-            <Label htmlFor="pescador">Pescador Responsable</Label>
-            <Select
-              value={formData.pescador}
-              onValueChange={(value) =>
-                setFormData({ ...formData, pescador: value })
-              }
-              required
-            >
-              <SelectTrigger id="pescador">
-                <SelectValue />
-              </SelectTrigger>
-
-              <SelectContent>
-                {pescadores.map((p) => (
-                  <SelectItem key={p.id} value={p.nombre}>
-                    {p.nombre} - {p.especialidad}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* BOTÓN */}
-          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-            Registrar Cosecha
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <Button className="w-full bg-cyan-600">Registrar Cosecha</Button>
+    </form>
   );
 }
