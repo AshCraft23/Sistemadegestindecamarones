@@ -13,54 +13,56 @@ import {
 import { AlertCircle } from "lucide-react";
 import { Lote, Pescador } from "../App";
 
-interface CosechaFormProps {
+interface Props {
   lotes: Lote[];
   pescadores: Pescador[];
-  pescadorId: string;
+  currentPescadorId?: string; // opcional: si el usuario actual es pescador
+  currentPescadorNombre?: string; // opcional: nombre a usar si es pescador
   onSubmit: (data: {
     loteId: string;
     fecha: string;
     libras: number;
-    pescador_id: string;
+    pescador_id?: string | null;
+    pescador?: string | null;
   }) => void;
 }
 
 export function CosechaForm({
   lotes,
   pescadores,
-  pescadorId,
+  currentPescadorId,
+  currentPescadorNombre,
   onSubmit,
-}: CosechaFormProps) {
-  const [formData, setFormData] = useState({
+}: Props) {
+  const [form, setForm] = useState({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
-    pescador_id: pescadorId,
+    pescador_id: currentPescadorId ?? "",
+    pescador: currentPescadorNombre ?? "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.loteId) {
-      alert("Debes seleccionar un lote.");
-      return;
-    }
+    if (!form.loteId) return alert("Debes seleccionar un lote.");
+    if (!form.libras || form.libras <= 0) return alert("Las libras deben ser mayores a 0.");
 
-    if (formData.libras <= 0) {
-      alert("Las libras deben ser mayores a 0.");
-      return;
-    }
-
+    // Normalizamos el payload: si hay pescador_id lo mandamos, y además pescador (nombre)
     onSubmit({
-      ...formData,
-      libras: Number(formData.libras),
+      loteId: form.loteId,
+      fecha: form.fecha,
+      libras: Number(form.libras),
+      pescador_id: form.pescador_id || null,
+      pescador: form.pescador || null,
     });
 
-    setFormData({
+    setForm({
       loteId: "",
       fecha: new Date().toISOString().split("T")[0],
       libras: 0,
-      pescador_id: pescadorId,
+      pescador_id: currentPescadorId ?? "",
+      pescador: currentPescadorNombre ?? "",
     });
   };
 
@@ -70,10 +72,7 @@ export function CosechaForm({
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-yellow-800">
             <AlertCircle className="size-5" />
-            <p>
-              No hay lotes disponibles para cosecha. 
-              Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.
-            </p>
+            <p>No hay lotes disponibles para cosecha. Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.</p>
           </div>
         </CardContent>
       </Card>
@@ -88,85 +87,62 @@ export function CosechaForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-
-          {/* LOTE */}
-          <div className="space-y-2">
+          <div>
             <Label>Lote</Label>
-            <Select
-              value={formData.loteId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, loteId: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar lote" />
-              </SelectTrigger>
-
+            <Select value={form.loteId} onValueChange={(v) => setForm({ ...form, loteId: v })}>
+              <SelectTrigger><SelectValue placeholder="Seleccionar lote" /></SelectTrigger>
               <SelectContent>
-                {lotes.map((lote) => (
-                  <SelectItem key={lote.id} value={lote.id}>
-                    {lote.nombre} — {lote.tipo_camaron}
+                {lotes.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.nombre} — {l.tipo_camaron}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* FECHA */}
-          <div className="space-y-2">
+          <div>
             <Label>Fecha</Label>
-            <Input
-              type="date"
-              value={formData.fecha}
-              onChange={(e) =>
-                setFormData({ ...formData, fecha: e.target.value })
-              }
-            />
+            <Input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
           </div>
 
-          {/* LIBRAS */}
-          <div className="space-y-2">
+          <div>
             <Label>Libras cosechadas</Label>
             <Input
               type="number"
               min="0.01"
               step="0.01"
-              value={formData.libras}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  libras: parseFloat(e.target.value) || 0,
-                })
-              }
+              value={form.libras || ""}
+              onChange={(e) => setForm({ ...form, libras: parseFloat(e.target.value) || 0 })}
             />
           </div>
 
-          {/* PESCADOR */}
-          <div className="space-y-2">
-            <Label>Pescador</Label>
-            <Select
-              value={formData.pescador_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, pescador_id: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar pescador" />
-              </SelectTrigger>
+          {/* Si currentPescadorId viene (usuario pescador), fijamos el select a ese ID y lo ocultamos */}
+          {currentPescadorId ? (
+            <div>
+              <Label>Pescador</Label>
+              <Input value={currentPescadorNombre ?? "Pescador"} readOnly />
+            </div>
+          ) : (
+            <div>
+              <Label>Pescador</Label>
+              <Select value={form.pescador_id} onValueChange={(v) => {
+                const p = pescadores.find((x) => x.id === v);
+                setForm({ ...form, pescador_id: v, pescador: p?.nombre ?? "" });
+              }}>
+                <SelectTrigger><SelectValue placeholder="Seleccionar pescador" /></SelectTrigger>
+                <SelectContent>
+                  {pescadores.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nombre} — {p.especialidad}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-              <SelectContent>
-                {pescadores.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.nombre} — {p.especialidad}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white hover:from-cyan-700 hover:to-teal-700">
-            Registrar Cosecha
-          </Button>
+          <Button className="w-full">Registrar Cosecha</Button>
         </form>
       </CardContent>
     </Card>
