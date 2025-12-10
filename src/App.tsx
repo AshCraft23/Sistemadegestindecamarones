@@ -49,15 +49,18 @@ export type UserRole =
 
 export interface Usuario {
   id: string;
-  nombre: string; // mapea a "name"
+  nombre: string;      // mapea a "name"
   username: string;
   email?: string;
   password: string;
-  rol: UserRole; // mapea a "role"
-  activo: boolean; // mapea a "active"
+  rol: UserRole;       // mapea a "role"
+  activo: boolean;     // mapea a "active"
 }
 
-// Lote alineado con la tabla lotes_dashboard
+// NOTA: este tipo mezcla lo que viene de la vista (snake_case)
+// y alias en camelCase / sin guión bajo para que otros componentes sigan funcionando.
+
+
 export interface Lote {
   id: string;
   nombre: string;
@@ -67,11 +70,12 @@ export interface Lote {
   estado: EstadoLote;
   costo_produccion: number;
 
-  // columnas de la tabla lotes_dashboard
-  libras: number; // total cosechado
+  // Campos calculados por la vista (snake_case reales)
+  libras_cosechadas: number;
   libras_vendidas: number;
   ingresos_totales: number;
-  libras_en_inventario: number;
+
+  
 }
 
 export interface Cosecha {
@@ -79,7 +83,7 @@ export interface Cosecha {
   loteId: string;
   fecha: string;
   libras: number;
-  pescador_id: string; // UUID correcto
+  pescador_id: string;  // UUID correcto
   pescador_nombre: string; // nombre visible
 }
 
@@ -134,7 +138,7 @@ export default function App() {
   const selectedLote = lotes.find((l) => l.id === selectedLoteId) || null;
 
   // ====================
-  // FETCH: LOTES  (tabla lotes_dashboard)
+  // FETCH: LOTES  (vista lotes_dashboard)
   // ====================
   const fetchLotes = async () => {
     const { data, error } = await supabase
@@ -142,10 +146,7 @@ export default function App() {
       .select("*")
       .order("fecha_inicio", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando lotes:", error);
-      return;
-    }
+    if (error) return;
 
     setLotes(
       (data ?? []).map((row: any) => ({
@@ -156,10 +157,9 @@ export default function App() {
         tipo_camaron: row.tipo_camaron,
         estado: row.estado,
         costo_produccion: Number(row.costo_produccion) || 0,
-        libras: Number(row.libras) || 0,
+        libras_cosechadas: Number(row.libras_cosechadas) || 0,
         libras_vendidas: Number(row.libras_vendidas) || 0,
         ingresos_totales: Number(row.ingresos_totales) || 0,
-        libras_en_inventario: Number(row.libras_en_inventario) || 0,
       }))
     );
   };
@@ -305,9 +305,7 @@ export default function App() {
       }))
     );
   };
-
-  // ====================
-  // FETCH: COSECHAS
+  // FETCH COSECHAS
   // ====================
   const fetchCosechas = async () => {
     const { data, error } = await supabase
@@ -315,10 +313,7 @@ export default function App() {
       .select("id, lote_id, fecha, libras, pescador_id, pescador_nombre")
       .order("fecha", { ascending: false });
 
-    if (error) {
-      console.error("Error cargando cosechas:", error);
-      return;
-    }
+    if (error) return;
 
     setCosechas(
       (data ?? []).map((row: any) => ({
@@ -343,8 +338,9 @@ export default function App() {
       fetchPescadores(),
       fetchVendedores(),
       fetchUsuarios(),
-      fetchCosechas(),
+      fetchCosechas(), // ← NECESARIO
     ]);
+
   };
 
   // ====================
@@ -376,10 +372,10 @@ export default function App() {
                 break;
               case "ventas":
                 fetchVentas();
-                fetchLotes(); // refrescar dashboard
+                fetchLotes(); // para refrescar totales de la vista
                 break;
               case "cosechas":
-                fetchCosechas();
+                  fetchCosechas();
                 fetchLotes();
                 break;
               case "proveedores":
@@ -449,42 +445,43 @@ export default function App() {
     setShowLoteForm(false);
   };
 
-  const handleDeleteLote = async (loteId: string) => {
-    const { error } = await supabase.from("lotes").delete().eq("id", loteId);
+const handleDeleteLote = async (loteId: string) => {
+  const { error } = await supabase.from("lotes").delete().eq("id", loteId);
 
-    if (error) {
-      alert("Error eliminando lote: " + error.message);
-      return;
-    }
+  if (error) {
+    alert("Error eliminando lote: " + error.message);
+    return;
+  }
 
-    setLotes((prev) => prev.filter((l) => l.id !== loteId));
-    setSelectedLoteId(null);
+  // Quitar de estado local
+  setLotes(prev => prev.filter(l => l.id !== loteId));
 
-    fetchVentas();
-    fetchLotes();
-  };
+  // Si el lote eliminado era el seleccionado → reset
+  setSelectedLoteId(null);
+
+  // Recargar vistas relacionadas
+  fetchVentas();
+  fetchLotes();
+};
 
   const handleUpdateLoteEstado = async (loteId: string, estado: EstadoLote) => {
-    const { error } = await supabase
-      .from("lotes")
-      .update({ estado })
-      .eq("id", loteId);
+  const { error } = await supabase
+    .from("lotes")
+    .update({ estado })
+    .match({ id: loteId });  // <-- nunca enviará lote_id por error
 
-    if (error) {
-      console.error("Error actualizando estado:", error);
-      alert("Error actualizando estado: " + error.message);
-      return;
-    }
+  if (error) {
+    alert("Error actualizando estado: " + error.message);
+    return;
+  }
 
-    setLotes((prev) =>
-      prev.map((l) => (l.id === loteId ? { ...l, estado } : l))
-    );
-  };
+  setLotes(prev =>
+    prev.map(l => (l.id === loteId ? { ...l, estado } : l))
+  );
+};
 
-  const handleUpdateFechaPesca = async (
-    loteId: string,
-    nuevaFecha: string
-  ) => {
+
+  const handleUpdateFechaPesca = async (loteId: string, nuevaFecha: string) => {
     const { error } = await supabase
       .from("lotes")
       .update({ fecha_estimada_pesca: nuevaFecha })
@@ -503,78 +500,76 @@ export default function App() {
   };
 
   // ====================
-  // COSECHAS
+  // COSECHAS (inserta en tabla cosechas)
   // ====================
   const handleRegistrarCosecha = async (cosechaData: {
-    loteId: string;
-    fecha: string;
-    libras: number;
-    pescador_id: string;
-  }) => {
-    console.log("DATA ENVIADA A SUPABASE:", cosechaData);
+  loteId: string;
+  fecha: string;
+  libras: number;
+  pescador_id: string;
+}) => {
+  console.log("DATA ENVIADA A SUPABASE:", cosechaData);
 
-    if (!cosechaData.loteId || !cosechaData.pescador_id) {
-      alert("Error: Faltan datos obligatorios.");
-      return;
+  if (!cosechaData.loteId || !cosechaData.pescador_id) {
+    alert("Error: Faltan datos obligatorios.");
+    return;
+  }
+
+  const pescador = pescadores.find(p => p.id === cosechaData.pescador_id);
+
+  // 1️⃣ INSERTAR COSECHA
+  const { data, error } = await supabase
+  .from("cosechas")
+  .insert({
+    lote_id: cosechaData.loteId,
+    fecha: cosechaData.fecha,
+    libras: cosechaData.libras,
+    pescador_id: cosechaData.pescador_id,
+    pescador_nombre: pescador?.nombre ?? null
+  })
+  .select();   // ← esto va pegado a insert(), NO va en una nueva línea aislada
+
+
+  if (error) {
+    console.error("Supabase error:", error);
+    alert("Error registrando cosecha: " + error.message);
+    return;
+  }
+
+  const inserted = data?.[0];
+  console.log("COSECHA INSERTADA:", inserted);
+
+  // 2️⃣ CAMBIAR ESTADO A "EN VENTA" AUTOMÁTICAMENTE
+  const { error: updateError } = await supabase
+    .from("lotes")
+    .update({ estado: "En Venta" })
+    .eq("id", cosechaData.loteId);
+
+  if (updateError) {
+    alert("Cosecha registrada, pero falló actualizar estado del lote.");
+  }
+
+  // 3️⃣ ACTUALIZAR ESTADO LOCAL
+  setCosechas(prev => [
+    ...prev,
+    {
+      id: inserted.id,
+      loteId: cosechaData.loteId,
+      fecha: cosechaData.fecha,
+      libras: cosechaData.libras,
+      pescador_id: cosechaData.pescador_id,
+      pescador_nombre: pescador?.nombre ?? "",
     }
+  ]);
 
-    const pescador = pescadores.find((p) => p.id === cosechaData.pescador_id);
-
-    const { data, error } = await supabase
-      .from("cosechas")
-      .insert({
-        lote_id: cosechaData.loteId,
-        fecha: cosechaData.fecha,
-        libras: cosechaData.libras,
-        pescador_id: cosechaData.pescador_id,
-        pescador_nombre: pescador?.nombre ?? null,
-      })
-      .select();
-
-    if (error) {
-      console.error("Supabase error:", error);
-      alert("Error registrando cosecha: " + error.message);
-      return;
-    }
-
-    const inserted = data?.[0];
-    console.log("COSECHA INSERTADA:", inserted);
-
-    const { error: updateError } = await supabase
-      .from("lotes")
-      .update({ estado: "En Venta" })
-      .eq("id", cosechaData.loteId);
-
-    if (updateError) {
-      alert("Cosecha registrada, pero falló actualizar estado del lote.");
-    }
-
-    setCosechas((prev) => [
-      ...prev,
-      {
-        id: inserted.id,
-        loteId: cosechaData.loteId,
-        fecha: cosechaData.fecha,
-        libras: cosechaData.libras,
-        pescador_id: cosechaData.pescador_id,
-        pescador_nombre: pescador?.nombre ?? "",
-      },
-    ]);
-
-    fetchLotes();
-  };
+  // 4️⃣ Recargar lotes (se refresca ventas/cosechas en dashboard)
+  fetchLotes();
+};
 
   // ====================
   // VENTAS
   // ====================
-  const handleRegistrarVenta = async (ventaData: {
-    lote_id: string;
-    fecha: string;
-    libras: number;
-    precio_libra: number;
-    proveedor: string;
-    vendedor: string;
-  }) => {
+  const handleRegistrarVenta = async (ventaData: Omit<Venta, "id">) => {
     const proveedorEncontrado = proveedores.find(
       (p) => p.nombre === ventaData.proveedor
     );
@@ -583,10 +578,10 @@ export default function App() {
     );
 
     const { error } = await supabase.from("ventas").insert({
-      lote_id: ventaData.lote_id,
+      lote_id: ventaData.loteId,
       fecha: ventaData.fecha,
       libras: ventaData.libras,
-      precio_libra: ventaData.precio_libra,
+      precio_libra: ventaData.precioLibra,
       proveedor_id: proveedorEncontrado?.id ?? null,
       proveedor_nombre: ventaData.proveedor,
       vendedor_id: vendedorEncontrado?.id ?? null,
@@ -782,7 +777,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
       <header className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify_between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-gradient-to-br from-cyan-500 to-teal-500 p-2 rounded-lg">
                 <Waves className="size-6 text-white" />
@@ -808,9 +803,9 @@ export default function App() {
                     </SelectTrigger>
                     <SelectContent>
                       {lotes.map((lote) => (
-                        <SelectItem key={lote.id} value={lote.id}>
-                          {lote.id} - {lote.nombre}
-                        </SelectItem>
+                        <SelectItem key={lote.id} value={String(lote.id)}>
+  {lote.nombre}
+</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -878,18 +873,15 @@ export default function App() {
               <TabsContent value="dashboard">
                 {selectedLote ? (
                   <Dashboard
-                    lote={selectedLote}
-                    ventas={ventas.filter(
-                      (v) => v.loteId === selectedLote.id
-                    )}
-                    cosechas={cosechas.filter(
-                      (c) => c.loteId === selectedLote.id
-                    )}
-                    userRole={currentUser.rol}
-                    onUpdateEstado={handleUpdateLoteEstado}
-                    onUpdateFechaPesca={handleUpdateFechaPesca}
-                    onDeleteLote={handleDeleteLote}
-                  />
+  lote={selectedLote}
+  ventas={ventas.filter(v => v.loteId === selectedLote.id)}
+  cosechas={cosechas.filter(c => c.loteId === selectedLote.id)}
+  userRole={currentUser.rol}
+  onUpdateEstado={handleUpdateLoteEstado}
+  onUpdateFechaPesca={handleUpdateFechaPesca}
+  onDeleteLote={handleDeleteLote}   //  
+/>
+
                 ) : (
                   <div className="bg-white rounded-lg shadow p-8 text-center">
                     <p className="text-gray-600">
@@ -954,7 +946,8 @@ export default function App() {
                 <VentaForm
                   lotes={lotes.filter(
                     (l) =>
-                      l.estado === "En Venta" && l.libras_en_inventario > 0
+                      l.estado === "En Venta" &&
+                      l.libras_cosechadas - l.libras_vendidas > 0
                   )}
                   onSubmit={handleRegistrarVenta}
                   proveedores={proveedores.filter((p) => p.activo)}
