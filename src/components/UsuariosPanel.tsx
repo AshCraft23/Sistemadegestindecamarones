@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Button } from "./ui/button";
 import {
   Select,
   SelectTrigger,
@@ -10,9 +15,11 @@ import {
   SelectItem,
   SelectValue,
 } from "./ui/select";
-import { Switch } from "./ui/switch";
+
+import { Badge } from "./ui/badge";
+import { Eye, EyeOff, Edit2, Trash2 } from "lucide-react";
+
 import { Usuario, UserRole } from "../App";
-import React from "react"; // Necesario para el tipado de eventos
 
 interface UsuariosPanelProps {
   usuarios: Usuario[];
@@ -27,6 +34,8 @@ export function UsuariosPanel({
   onUpdateUsuario,
   onDeleteUsuario,
 }: UsuariosPanelProps) {
+  const [editId, setEditId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState<Omit<Usuario, "id">>({
     nombre: "",
     username: "",
@@ -35,19 +44,10 @@ export function UsuariosPanel({
     activo: true,
   });
 
-  const [editId, setEditId] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
 
-  // ==================================================
-  // SUBMIT CREAR / ACTUALIZAR
-  // ==================================================
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validación básica
-    if (!formData.nombre || !formData.username || !formData.password || !formData.rol) {
-        alert("Todos los campos son obligatorios.");
-        return;
-    }
 
     if (editId) {
       onUpdateUsuario(editId, formData);
@@ -56,29 +56,6 @@ export function UsuariosPanel({
       onCreateUsuario(formData);
     }
 
-    // Limpiar formulario después de la operación
-    setFormData({
-      nombre: "",
-      username: "",
-      password: "", 
-      rol: "Vendedor",
-      activo: true,
-    });
-  };
-
-  const startEdit = (usuario: Usuario) => {
-    setEditId(usuario.id);
-    setFormData({
-      nombre: usuario.nombre,
-      username: usuario.username,
-      password: "", 
-      rol: usuario.rol,
-      activo: usuario.activo,
-    });
-  };
-  
-  const cancelEdit = () => {
-    setEditId(null);
     setFormData({
       nombre: "",
       username: "",
@@ -88,15 +65,34 @@ export function UsuariosPanel({
     });
   };
 
-  // Función genérica para manejar los cambios de Input y tipado seguro
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { id, value } = e.target;
-      setFormData({ ...formData, [id]: value });
+  const startEdit = (u: Usuario) => {
+    setEditId(u.id);
+    setFormData({
+      nombre: u.nombre,
+      username: u.username,
+      password: u.password,
+      rol: u.rol,
+      activo: u.activo,
+    });
   };
 
+  const togglePassword = (id: string) => {
+    setShowPassword((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const rolColors: Record<UserRole, string> = {
+    Administrador: "bg-purple-100 text-purple-800 border-purple-300",
+    Propietario: "bg-blue-100 text-blue-800 border-blue-300",
+    Vendedor: "bg-green-100 text-green-800 border-green-300",
+    Pescador: "bg-cyan-100 text-cyan-800 border-cyan-300",
+  };
 
   return (
     <div className="space-y-8">
+      {/* FORMULARIO */}
       <Card>
         <CardHeader>
           <CardTitle>
@@ -106,54 +102,58 @@ export function UsuariosPanel({
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            
             {/* Nombre */}
             <div>
-              <Label htmlFor="nombre">Nombre</Label>
+              <Label>Nombre</Label>
               <Input
-                id="nombre" // ¡Importante tener el ID para el handler genérico!
                 value={formData.nombre}
-                onChange={handleInputChange} // Usando el handler genérico y tipado
+                onChange={(e) =>
+                  setFormData({ ...formData, nombre: e.target.value })
+                }
                 required
               />
             </div>
 
             {/* Username */}
             <div>
-              <Label htmlFor="username">Usuario (Username/Email)</Label>
+              <Label>Usuario</Label>
               <Input
-                id="username" // ¡Importante tener el ID!
                 value={formData.username}
-                onChange={handleInputChange} // Usando el handler genérico y tipado
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
                 required
               />
             </div>
 
             {/* Password */}
             <div>
-              <Label htmlFor="password">Password {editId ? "(Dejar vacío para no cambiar)" : ""}</Label>
+              <Label>Contraseña</Label>
               <Input
-                id="password" // ¡Importante tener el ID!
-                type="password"
+                type="text"
                 value={formData.password}
-                onChange={handleInputChange} // Usando el handler genérico y tipado
-                required={!editId} 
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required
               />
+              <p className="text-xs text-gray-500">
+                La contraseña se muestra en texto plano para facilitar gestión.
+              </p>
             </div>
 
-            {/* Rol (Select) */}
-            <div className="space-y-1"> 
-              <Label htmlFor="rol-select">Rol</Label>
+            {/* Rol */}
+            <div>
+              <Label>Rol</Label>
               <Select
                 value={formData.rol}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, rol: value as UserRole })
+                onValueChange={(value: UserRole) =>
+                  setFormData({ ...formData, rol: value })
                 }
               >
-                <SelectTrigger id="rol-select">
-                  <SelectValue placeholder="Seleccionar rol" />
+                <SelectTrigger>
+                  <SelectValue />
                 </SelectTrigger>
-
                 <SelectContent>
                   <SelectItem value="Administrador">Administrador</SelectItem>
                   <SelectItem value="Propietario">Propietario</SelectItem>
@@ -163,87 +163,88 @@ export function UsuariosPanel({
               </Select>
             </div>
 
-            {/* Activo (Switch) */}
-            <div className="flex items-center gap-2 pt-2">
-              <Switch
-                id="activo"
+            {/* Activo */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
                 checked={formData.activo}
-                onCheckedChange={(value) =>
-                  setFormData({ ...formData, activo: value })
+                onChange={(e) =>
+                  setFormData({ ...formData, activo: e.target.checked })
                 }
               />
-              <Label htmlFor="activo">Activo</Label>
+              <Label>Activo</Label>
             </div>
 
-            <div className="flex gap-2 pt-4">
-                <Button 
-                    type="submit" 
-                    className="flex-1 bg-cyan-600 hover:bg-cyan-700"
-                >
-                    {editId ? "Guardar Cambios" : "Crear Usuario"}
-                </Button>
-                {editId && (
-                    <Button type="button" variant="outline" onClick={cancelEdit}>
-                        Cancelar Edición
-                    </Button>
-                )}
-            </div>
+            <Button className="w-full">
+              {editId ? "Guardar Cambios" : "Crear Usuario"}
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Tabla de usuarios */}
+      {/* LISTA DE USUARIOS */}
       <Card>
         <CardHeader>
           <CardTitle>Usuarios Registrados</CardTitle>
         </CardHeader>
 
         <CardContent>
-          {/* Aquí se asegura de que 'usuarios' sea un array antes de usar length o map */}
-          <div className="space-y-2">
-            {(!usuarios || usuarios.length === 0) && (
-              <p className="text-gray-500 text-center">
-                No hay usuarios registrados
+          <div className="space-y-3">
+            {usuarios.length === 0 && (
+              <p className="text-center text-gray-500">
+                No hay usuarios registrados.
               </p>
             )}
 
-            {usuarios && Array.isArray(usuarios) && usuarios.map((u) => (
+            {usuarios.map((u) => (
               <div
                 key={u.id}
-                className="flex justify-between items-center border rounded-md p-3 bg-white hover:shadow-md transition-shadow"
+                className="flex justify-between items-center p-3 border rounded-md bg-white"
               >
                 <div>
-                  <p className="font-semibold">{u.nombre} {editId === u.id && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 rounded">Editando...</span>}</p>
-                  <p className="text-sm text-gray-600">Usuario: {u.username}</p>
-                  <p className="text-sm text-cyan-700 font-medium">Rol: {u.rol}</p>
-                  <p
+                  <p className="font-bold">{u.nombre}</p>
+                  <p className="text-sm text-gray-600">{u.username}</p>
+
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono">
+                      {showPassword[u.id] ? u.password : "••••••••"}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => togglePassword(u.id)}
+                    >
+                      {showPassword[u.id] ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  <Badge className={rolColors[u.rol]}>{u.rol}</Badge>
+
+                  <Badge
                     className={
-                      u.activo ? "text-green-600 text-sm" : "text-red-600 text-sm"
+                      u.activo
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-200 text-gray-700"
                     }
                   >
                     {u.activo ? "Activo" : "Inactivo"}
-                  </p>
+                  </Badge>
                 </div>
 
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => startEdit(u)}
-                    disabled={editId !== null} 
-                  >
-                    Editar
+                  <Button variant="outline" onClick={() => startEdit(u)}>
+                    <Edit2 className="size-4" />
                   </Button>
 
                   <Button
                     variant="destructive"
-                    onClick={() => {
-                        if (window.confirm(`¿Está seguro que desea eliminar a ${u.nombre}?`)) {
-                            onDeleteUsuario(u.id);
-                        }
-                    }}
-                    disabled={editId !== null}
+                    onClick={() => onDeleteUsuario(u.id)}
                   >
-                    Eliminar
+                    <Trash2 className="size-4" />
                   </Button>
                 </div>
               </div>
