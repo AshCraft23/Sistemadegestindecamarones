@@ -117,17 +117,15 @@ export function UsuariosPanel({
               />
             </div>
 
-            {/* Rol */}
-            <div>
-              <Label>Rol</Label>
+            <Label>Rol</Label>
               <Select
                 value={formData.rol}
-                onValueChange={(value: UserRole) =>
-                  setFormData({ ...formData, rol: value })
+                onValueChange={(value) =>
+                  setFormData({ ...formData, rol: value as UserRole })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Seleccionar rol" />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -137,7 +135,7 @@ export function UsuariosPanel({
                   <SelectItem value="Pescador">Pescador</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+
 
             {/* Activo */}
             <div className="flex items-center gap-2 mt-2">
