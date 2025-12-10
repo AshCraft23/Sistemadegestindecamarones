@@ -349,30 +349,33 @@ export default function App() {
   // CRUD LOTES
   // ====================
   const handleCreateLote = async (
-    loteData: Omit<
-      Lote,
-      "id" | "librasCosechadas" | "librasVendidas" | "ingresostotales"
-    >
-  ) => {
-    const { error } = await supabase.from("lotes").insert({
-      nombre: loteData.nombre,
-      fecha_inicio: loteData.fechaInicio,
-      fecha_estimada_pesca: loteData.fechaEstimadaPesca,
-      tipo_camaron: loteData.tipoCamaron,
-      estado: loteData.estado,
-      libras_cosechadas: 0,
-      libras_vendidas: 0,
-      costo_produccion: loteData.costoProduccion,
-      ingresos_totales: 0,
-    });
+  loteData: Omit<
+    Lote,
+    "id" | "librasCosechadas" | "librasVendidas" | "ingresosTotales"
+  >
+) => {
+  const { error } = await supabase.from("lotes").insert({
+    nombre: loteData.nombre,
+    fecha_inicio: loteData.fechaInicio,
+    fecha_estimada_pesca: loteData.fechaEstimadaPesca,
+    tipo_camaron: loteData.tipoCamaron,
+    estado: loteData.estado,
 
-    if (error) {
-      alert("Error creando lote: " + error.message);
-      return;
-    }
+    // NOMBRES EXACTOS SEGÚN TU TABLA
+    librascosechadas: 0,
+    librasvendidas: 0,
+    costo_produccion: loteData.costoProduccion,
+    ingresostotales: 0,
+  });
 
-    setShowLoteForm(false);
-  };
+  if (error) {
+    alert("Error creando lote: " + error.message);
+    return;
+  }
+
+  setShowLoteForm(false);
+};
+
 
   const handleUpdateLoteEstado = async (
     loteId: string,
