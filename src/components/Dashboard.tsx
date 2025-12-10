@@ -12,7 +12,7 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
 } from "recharts";
 import {
   Calendar,
@@ -23,30 +23,30 @@ import {
   Edit2,
   Check,
   X,
-  MoreVertical, // Importado para el menú de acciones
-  Trash2 // Importado para el icono de borrar
+  MoreVertical,
+  Trash2,
 } from "lucide-react";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "./ui/dropdown-menu"; // Importado para el menú de acciones
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Lote, Venta, Cosecha, UserRole } from "../App";
 import { KPICard } from "./KPICard";
 import { TransactionTable } from "./TransactionTable";
 import { Badge } from "./ui/badge";
 import { useState } from "react";
 
-// Lista de estados posibles (necesario para el DropdownMenu)
+// Lista de estados posibles
 const TODOS_LOS_ESTADOS: Lote["estado"][] = [
   "Crianza",
   "Listo para Pescar",
   "En Venta",
   "Reposo",
-  "Descarte"
+  "Descarte",
 ];
 
 interface DashboardProps {
@@ -56,7 +56,7 @@ interface DashboardProps {
   userRole: UserRole;
   onUpdateEstado: (id: string, estado: Lote["estado"]) => void;
   onUpdateFechaPesca: (id: string, nueva: string) => void;
-  onDeleteLote: (id: string) => void; // <--- NUEVA PROP
+  onDeleteLote: (id: string) => void;
 }
 
 const COLORS = ["#0891b2", "#14b8a6"];
@@ -66,7 +66,7 @@ const estadoColors: Record<Lote["estado"], string> = {
   "Listo para Pescar": "bg-green-100 text-green-800 border-green-200",
   "En Venta": "bg-cyan-100 text-cyan-800 border-cyan-200",
   Reposo: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  Descarte: "bg-red-100 text-red-800 border-red-200"
+  Descarte: "bg-red-100 text-red-800 border-red-200",
 };
 
 export function Dashboard({
@@ -76,12 +76,9 @@ export function Dashboard({
   userRole,
   onUpdateEstado,
   onUpdateFechaPesca,
-  onDeleteLote // <--- Recibiendo la nueva prop
+  onDeleteLote,
 }: DashboardProps) {
-
-  // ============================================
-  // 🧨 SI LOTE ES NULL, NO RENDERIZAR DASHBOARD
-  // ============================================
+  // Si todavía no hay lote seleccionado
   if (!lote) {
     return (
       <div className="bg-white p-6 rounded shadow text-center text-gray-600">
@@ -90,13 +87,18 @@ export function Dashboard({
     );
   }
 
-  // Normalización FIJA Y SEGURA
-  const librasCosechadas = Number(lote.librascosechadas ?? lote.libras_cosechadas ?? 0);
-  const librasVendidas = Number(lote.librasvendidas ?? lote.libras_vendidas ?? 0);
+  // Normalización de números
+  const librasCosechadas = Number(
+    lote.librascosechadas ?? lote.libras_cosechadas ?? 0
+  );
+  const librasVendidas = Number(
+    lote.librasvendidas ?? lote.libras_vendidas ?? 0
+  );
   const costoProduccion = Number(lote.costo_produccion ?? 0);
-  const ingresosTotales = Number(lote.ingresostotales ?? lote.ingresos_totales ?? 0);
+  const ingresosTotales = Number(
+    lote.ingresostotales ?? lote.ingresos_totales ?? 0
+  );
 
-  // Proteger inventario y gráficas
   const librasDisponibles = Math.max(librasCosechadas - librasVendidas, 0);
 
   const gananciaBruta = ingresosTotales - costoProduccion;
@@ -105,9 +107,7 @@ export function Dashboard({
   const margenGanancia =
     costoProduccion > 0 ? (gananciaBruta / costoProduccion) * 100 : 0;
 
-  // ============================================
-  // 🔒 Proteger ventas: evitar undefined / null
-  // ============================================
+  // Proteger ventas
   const ventasLista = Array.isArray(ventas) ? ventas : [];
 
   const ventasPorProveedor = ventasLista.reduce((acc, venta) => {
@@ -123,18 +123,15 @@ export function Dashboard({
       acc.push({
         proveedor: venta.proveedor || "N/D",
         libras,
-        ingresos: libras * precio
+        ingresos: libras * precio,
       });
     }
     return acc;
   }, [] as Array<{ proveedor: string; libras: number; ingresos: number }>);
 
-  // ============================================
-  // ✔ Inventario protegido
-  // ============================================
   const inventarioData = [
     { name: "Vendido", value: librasVendidas },
-    { name: "Disponible", value: librasDisponibles }
+    { name: "Disponible", value: librasDisponibles },
   ];
 
   const fechaInicio = new Date(lote.fecha_inicio);
@@ -145,25 +142,23 @@ export function Dashboard({
 
   const [editandoFecha, setEditandoFecha] = useState(false);
   const [nuevaFecha, setNuevaFecha] = useState(lote.fecha_estimada_pesca);
-  
-  // Función para manejar la eliminación
+
+  // Eliminar lote
   const handleDelete = () => {
     if (userRole !== "Administrador") {
-        alert("Permiso denegado. Solo un Administrador puede eliminar lotes.");
-        return;
+      alert("Permiso denegado. Solo un Administrador puede eliminar lotes.");
+      return;
     }
     const confirmDelete = window.confirm(
       `¡ATENCIÓN! Está a punto de eliminar el lote "${lote.nombre}" y TODAS sus transacciones (Cosechas y Ventas). Esta acción es irreversible. ¿Desea continuar?`
     );
     if (confirmDelete) {
-        onDeleteLote(lote.id);
+      onDeleteLote(lote.id);
     }
   };
 
-
   return (
     <div className="space-y-6">
-
       {/* HEADER DEL LOTE */}
       <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
         <CardHeader>
@@ -182,7 +177,8 @@ export function Dashboard({
                 <span>Tipo: {lote.tipo_camaron}</span>
 
                 <span>
-                  Inicio: {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
+                  Inicio:{" "}
+                  {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                 </span>
 
                 {/* FECHA ESTIMADA DE PESCA */}
@@ -222,12 +218,13 @@ export function Dashboard({
                   ) : (
                     <>
                       <span>
-                        {new Date(lote.fecha_estimada_pesca).toLocaleDateString(
-                          "es-ES"
-                        )}
+                        {new Date(
+                          lote.fecha_estimada_pesca
+                        ).toLocaleDateString("es-ES")}
                       </span>
 
-                      {(userRole === "Administrador" || userRole === "Propietario") && (
+                      {(userRole === "Administrador" ||
+                        userRole === "Propietario") && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -245,11 +242,10 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* ACCIONES (Dropdown y Eliminación) */}
+            {/* ACCIONES (Eliminar + Dropdown) */}
             {(userRole === "Propietario" || userRole === "Administrador") && (
               <div className="flex gap-2 items-center">
-
-                {/* Botón de Eliminación (Solo Admin) */}
+                {/* Botón Eliminar (solo Admin) */}
                 {userRole === "Administrador" && (
                   <Button
                     size="sm"
@@ -261,7 +257,7 @@ export function Dashboard({
                   </Button>
                 )}
 
-                {/* Menú de Cambio de Estado */}
+                {/* Dropdown para cambiar estado */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -272,20 +268,25 @@ export function Dashboard({
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Cambiar Estado a...</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {TODOS_LOS_ESTADOS
-                      .filter(estado => estado !== lote.estado) // No mostrar el estado actual
-                      .map((estado) => (
-                        <DropdownMenuItem
-                          key={estado}
-                          onClick={() => {
-                            if (window.confirm(`¿Seguro que desea cambiar el estado de ${lote.nombre} a "${estado}"?`)) {
-                                onUpdateEstado(lote.id, estado);
-                            }
-                          }}
-                        >
-                          {estado}
-                        </DropdownMenuItem>
-                      ))}
+                    {TODOS_LOS_ESTADOS.filter(
+                      (estado) => estado !== lote.estado
+                    ).map((estado) => (
+                      <DropdownMenuItem
+                        key={estado}
+                        onSelect={(e) => {
+                          e.preventDefault(); // por si acaso
+                          if (
+                            window.confirm(
+                              `¿Seguro que deseas cambiar el estado de "${lote.nombre}" a "${estado}"?`
+                            )
+                          ) {
+                            onUpdateEstado(lote.id, estado);
+                          }
+                        }}
+                      >
+                        {estado}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -329,7 +330,6 @@ export function Dashboard({
 
       {/* GRÁFICAS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* Ventas por proveedor */}
         {ventasPorProveedor.length > 0 && (
           <Card>
@@ -347,7 +347,9 @@ export function Dashboard({
                     height={80}
                   />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => `${value.toFixed(2)} lb`} />
+                  <Tooltip
+                    formatter={(value: number) => `${value.toFixed(2)} lb`}
+                  />
                   <Bar dataKey="libras" fill="#0891b2" />
                 </BarChart>
               </ResponsiveContainer>
@@ -360,7 +362,9 @@ export function Dashboard({
           <Card>
             <CardHeader>
               <CardTitle>Inventario Cosechado</CardTitle>
-              <p className="text-sm text-gray-500">Total cosechado: {librasCosechadas.toFixed(2)} lb</p>
+              <p className="text-sm text-gray-500">
+                Total cosechado: {librasCosechadas.toFixed(2)} lb
+              </p>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -371,14 +375,18 @@ export function Dashboard({
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                    label={({ name, percent }) =>
+                      `${name}: ${(percent * 100).toFixed(1)}%`
+                    }
                     outerRadius={80}
                   >
                     {inventarioData.map((_, idx) => (
                       <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => `${value.toFixed(2)} lb`} />
+                  <Tooltip
+                    formatter={(value: number) => `${value.toFixed(2)} lb`}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -399,4 +407,3 @@ export function Dashboard({
     </div>
   );
 }
- 
