@@ -580,36 +580,34 @@ const handleRegistrarVenta = async (ventaData: {
   fecha: string;
   libras: number;
   precio_libra: number;
-  proveedor_id: string | null;
-  proveedor_nombre: string;
-  vendedor_id: string;
-  vendedor_nombre: string;
+  proveedor: string;
+  vendedor: string;
 }) => {
-
   console.log("DATA DE VENTA RECIBIDA:", ventaData);
 
-  if (!ventaData.lote_id) {
-    alert("Error: Falta seleccionar lote.");
+  const proveedorEncontrado = proveedores.find(
+    (p) => p.nombre === ventaData.proveedor
+  );
+
+  const vendedorEncontrado = vendedores.find(
+    (v) => v.nombre === ventaData.vendedor
+  );
+
+  // ⚠️ Validación: vendedor debe existir
+  if (!vendedorEncontrado) {
+    alert("Error: El vendedor seleccionado no existe.");
     return;
   }
 
-  if (!ventaData.vendedor_id) {
-    alert("Error: vendedor inválido.");
-    return;
-  }
-
-  //  Insertar venta correctamente
   const { error } = await supabase.from("ventas").insert({
     lote_id: ventaData.lote_id,
     fecha: ventaData.fecha,
     libras: ventaData.libras,
     precio_libra: ventaData.precio_libra,
-
-    proveedor_id: ventaData.proveedor_id,
-    proveedor_nombre: ventaData.proveedor_nombre,
-
-    vendedor_id: ventaData.vendedor_id,
-    vendedor_nombre: ventaData.vendedor_nombre,
+    proveedor_id: proveedorEncontrado?.id ?? null,
+    proveedor_nombre: ventaData.proveedor,
+    vendedor_id: vendedorEncontrado.id, // ✅ UUID real
+    vendedor_nombre: vendedorEncontrado.nombre, // evitar valores vacíos
   });
 
   if (error) {
@@ -618,11 +616,8 @@ const handleRegistrarVenta = async (ventaData: {
     return;
   }
 
-  //  Recargar datos necesarios
-  await fetchVentas();
-  await fetchLotes();
-
-  alert("Venta registrada correctamente.");
+  fetchVentas();
+  fetchLotes();
 };
 
 
