@@ -130,7 +130,6 @@ export default function App() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [pescadores, setPescadores] = useState<Pescador[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
 
   const [selectedLoteId, setSelectedLoteId] = useState<string | null>(null);
   const [showLoteForm, setShowLoteForm] = useState(false);
@@ -677,13 +676,6 @@ export default function App() {
   // ====================
   if (!currentUser) {
     return (
-      <UsuariosPanel
-  usuarios={usuarios}
-  onCreateUsuario={handleCreateUsuario}
-  onUpdateUsuario={handleUpdateUsuario}
-  onDeleteUsuario={handleDeleteUsuario}
-/>
-
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
           <div className="flex items-center justify-center mb-6">
