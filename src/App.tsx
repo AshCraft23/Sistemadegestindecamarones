@@ -3,7 +3,8 @@ import { Button } from './components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
-import { User, LogOut, Waves } from 'lucide-react';
+import { LogOut, Waves } from 'lucide-react';
+
 import { Dashboard } from './components/Dashboard';
 import { DashboardAnual } from './components/DashboardAnual';
 import { LoteForm } from './components/LoteForm';
@@ -81,7 +82,7 @@ export interface Vendedor {
   activo: boolean;
 }
 
-// Datos mock iniciales
+// Mock inicial solo para lotes, cosechas y ventas
 const initialLotes: Lote[] = [
   {
     id: 'L-001',
@@ -152,72 +153,19 @@ const initialVentas: Venta[] = [
   }
 ];
 
-const initialProveedores: Proveedor[] = [
-  {
-    id: 'PR-001',
-    nombre: 'Mariscos del Pacífico',
-    contacto: 'Carlos Mendoza',
-    telefono: '+593-99-123-4567',
-    email: 'carlos@mariscospacifico.com',
-    activo: true
-  },
-  {
-    id: 'PR-002',
-    nombre: 'Exportadora Océano',
-    contacto: 'Ana Torres',
-    telefono: '+593-98-765-4321',
-    email: 'ana@exportadoraoceano.com',
-    activo: true
-  }
-];
-
-const initialPescadores: Pescador[] = [
-  {
-    id: 'PE-001',
-    nombre: 'Juan Pérez',
-    telefono: '+593-99-111-2222',
-    especialidad: 'Camarón Vannamei',
-    activo: true
-  },
-  {
-    id: 'PE-002',
-    nombre: 'Pedro Ramírez',
-    telefono: '+593-99-333-4444',
-    especialidad: 'General',
-    activo: true
-  }
-];
-
-const initialVendedores: Vendedor[] = [
-  {
-    id: 'VE-001',
-    nombre: 'María González',
-    telefono: '+593-99-555-6666',
-    email: 'maria@gelca.com',
-    activo: true
-  },
-  {
-    id: 'VE-002',
-    nombre: 'Roberto Silva',
-    telefono: '+593-99-777-8888',
-    email: 'roberto@gelca.com',
-    activo: true
-  }
-];
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
   const [lotes, setLotes] = useState<Lote[]>(initialLotes);
   const [cosechas, setCosechas] = useState<Cosecha[]>(initialCosechas);
   const [ventas, setVentas] = useState<Venta[]>(initialVentas);
-  const [proveedores, setProveedores] = useState<Proveedor[]>(initialProveedores);
-  const [pescadores, setPescadores] = useState<Pescador[]>(initialPescadores);
-  const [vendedores, setVendedores] = useState<Vendedor[]>(initialVendedores);
   const [selectedLoteId, setSelectedLoteId] = useState<string | null>(null);
   const [showLoteForm, setShowLoteForm] = useState(false);
 
   const selectedLote = lotes.find(l => l.id === selectedLoteId);
 
+  // ======================
+  // LOGIN / LOGOUT
+  // ======================
   const handleLogin = (user: Usuario) => {
     setCurrentUser(user);
     if (lotes.length > 0 && !selectedLoteId) {
@@ -230,6 +178,9 @@ export default function App() {
     setSelectedLoteId(null);
   };
 
+  // ======================
+  // LOTES
+  // ======================
   const handleCreateLote = (loteData: Omit<Lote, 'id' | 'librasCosechadas' | 'librasVendidas' | 'ingresosTotales'>) => {
     const newLote: Lote = {
       ...loteData,
@@ -238,7 +189,7 @@ export default function App() {
       librasVendidas: 0,
       ingresosTotales: 0
     };
-    setLotes([...lotes, newLote])
+    setLotes([...lotes, newLote]);
     setShowLoteForm(false);
   };
 
@@ -254,25 +205,31 @@ export default function App() {
     ));
   };
 
+  // ======================
+  // COSECHAS
+  // ======================
   const handleRegistrarCosecha = (cosechaData: Omit<Cosecha, 'id'>) => {
     const newCosecha: Cosecha = {
       ...cosechaData,
       id: `C-${String(cosechas.length + 1).padStart(3, '0')}`
     };
     setCosechas([...cosechas, newCosecha]);
-    
+
     setLotes(lotes.map(l => {
       if (l.id === cosechaData.loteId) {
         return {
           ...l,
           librasCosechadas: l.librasCosechadas + cosechaData.libras,
-          estado: 'En Venta' as EstadoLote
+          estado: 'En Venta'
         };
       }
       return l;
     }));
   };
 
+  // ======================
+  // VENTAS
+  // ======================
   const handleRegistrarVenta = (ventaData: Omit<Venta, 'id'>) => {
     const newVenta: Venta = {
       ...ventaData,
@@ -283,7 +240,8 @@ export default function App() {
     setLotes(lotes.map(l => {
       if (l.id === ventaData.loteId) {
         const nuevasLibrasVendidas = l.librasVendidas + ventaData.libras;
-        const nuevosIngresos = l.ingresosTotales + (ventaData.libras * ventaData.precioLibra);
+        const nuevosIngresos = l.ingresosTotales + ventaData.libras * ventaData.precioLibra;
+
         return {
           ...l,
           librasVendidas: nuevasLibrasVendidas,
@@ -294,54 +252,9 @@ export default function App() {
     }));
   };
 
-  const handleCreateProveedor = (proveedorData: Omit<Proveedor, 'id'>) => {
-    const newProveedor: Proveedor = {
-      ...proveedorData,
-      id: `PR-${String(proveedores.length + 1).padStart(3, '0')}`
-    };
-    setProveedores([...proveedores, newProveedor]);
-  };
-
-  const handleUpdateProveedor = (id: string, proveedorData: Omit<Proveedor, 'id'>) => {
-    setProveedores(proveedores.map(p => p.id === id ? { ...proveedorData, id } : p));
-  };
-
-  const handleDeleteProveedor = (id: string) => {
-    setProveedores(proveedores.filter(p => p.id !== id));
-  };
-
-  const handleCreatePescador = (pescadorData: Omit<Pescador, 'id'>) => {
-    const newPescador: Pescador = {
-      ...pescadorData,
-      id: `PE-${String(pescadores.length + 1).padStart(3, '0')}`
-    };
-    setPescadores([...pescadores, newPescador]);
-  };
-
-  const handleUpdatePescador = (id: string, pescadorData: Omit<Pescador, 'id'>) => {
-    setPescadores(pescadores.map(p => p.id === id ? { ...pescadorData, id } : p));
-  };
-
-  const handleDeletePescador = (id: string) => {
-    setPescadores(pescadores.filter(p => p.id !== id));
-  };
-
-  const handleCreateVendedor = (vendedorData: Omit<Vendedor, 'id'>) => {
-    const newVendedor: Vendedor = {
-      ...vendedorData,
-      id: `VE-${String(vendedores.length + 1).padStart(3, '0')}`
-    };
-    setVendedores([...vendedores, newVendedor]);
-  };
-
-  const handleUpdateVendedor = (id: string, vendedorData: Omit<Vendedor, 'id'>) => {
-    setVendedores(vendedores.map(v => v.id === id ? { ...vendedorData, id } : v));
-  };
-
-  const handleDeleteVendedor = (id: string) => {
-    setVendedores(vendedores.filter(v => v.id !== id));
-  };
-
+  // ======================
+  // PANTALLA LOGIN
+  // ======================
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center p-4">
@@ -353,13 +266,16 @@ export default function App() {
           </div>
           <h1 className="text-center text-cyan-900 mb-2">Sistema GELCA</h1>
           <p className="text-center text-gray-600 mb-8">Gestión de Camarones por Lotes</p>
-          
+
           <LoginForm onLogin={handleLogin} />
         </div>
       </div>
     );
   }
 
+  // ======================
+  // PANTALLA PESCADOR
+  // ======================
   if (currentUser.rol === 'Pescador') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
@@ -387,7 +303,7 @@ export default function App() {
             <CosechaForm 
               lotes={lotes.filter(l => l.estado === 'Listo para Pescar')}
               onSubmit={handleRegistrarCosecha}
-              pescadores={pescadores.filter(p => p.activo)}
+              pescadores={[]} 
               pescadorNombre={currentUser.nombre}
             />
           </div>
@@ -396,6 +312,9 @@ export default function App() {
     );
   }
 
+  // ======================
+  // PANEL PRINCIPAL
+  // ======================
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50">
       <header className="bg-white border-b border-gray-200 shadow-sm">
@@ -410,7 +329,7 @@ export default function App() {
                 <p className="text-sm text-gray-600">{currentUser.nombre} - {currentUser.rol}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {currentUser.rol !== 'Vendedor' && (
                 <div className="flex items-center gap-2">
@@ -429,7 +348,7 @@ export default function App() {
                   </Select>
                 </div>
               )}
-              
+
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="mr-2 size-4" />
                 Cerrar Sesión
@@ -440,128 +359,106 @@ export default function App() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue={currentUser.rol === 'Administrador' ? 'dashboard-anual' : currentUser.rol === 'Vendedor' ? 'venta' : 'dashboard'} className="space-y-6">
-          <TabsList className="bg-white">
-            {currentUser.rol === 'Administrador' && (
-              <TabsTrigger value="dashboard-anual">Dashboard Anual</TabsTrigger>
-            )}
-            {currentUser.rol !== 'Vendedor' && (
-              <>
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                <TabsTrigger value="lotes">Gestión de Lotes</TabsTrigger>
-              </>
-            )}
-            {currentUser.rol === 'Propietario' && (
-              <TabsTrigger value="cosecha">Registrar Cosecha</TabsTrigger>
-            )}
-            {(currentUser.rol === 'Vendedor' || currentUser.rol === 'Propietario' || currentUser.rol === 'Administrador') && (
-              <TabsTrigger value="venta">Registrar Venta</TabsTrigger>
-            )}
-            {(currentUser.rol === 'Propietario' || currentUser.rol === 'Administrador') && (
-              <TabsTrigger value="administracion">Administración</TabsTrigger>
-            )}
-          </TabsList>
-
+        <Tabs 
+          defaultValue={
+            currentUser.rol === 'Administrador' ? 'dashboard-anual' :
+            currentUser.rol === 'Vendedor' ? 'venta' : 
+            'dashboard'
+          } 
+          className="space-y-6"
+        >
+          {/* DASHBOARD ANUAL */}
           {currentUser.rol === 'Administrador' && (
             <TabsContent value="dashboard-anual">
               <DashboardAnual lotes={lotes} ventas={ventas} />
             </TabsContent>
           )}
 
+          {/* DASHBOARD */}
           {currentUser.rol !== 'Vendedor' && (
-            <>
-              <TabsContent value="dashboard">
-                {selectedLote ? (
-                  <Dashboard 
-                    lote={selectedLote}
-                    ventas={ventas.filter(v => v.loteId === selectedLote.id)}
-                    cosechas={cosechas.filter(c => c.loteId === selectedLote.id)}
-                    userRole={currentUser.rol}
-                    onUpdateEstado={handleUpdateLoteEstado}
-                    onUpdateFechaPesca={handleUpdateFechaPesca}
-                  />
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-600">Selecciona un lote para ver su dashboard</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="lotes">
-                <div className="space-y-4">
-                  {(currentUser.rol === 'Propietario' || currentUser.rol === 'Administrador') && (
-                    <div className="flex justify-end">
-                      <Dialog open={showLoteForm} onOpenChange={setShowLoteForm}>
-                        <DialogTrigger asChild>
-                          <Button className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
-                            Crear Nuevo Lote
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Crear Nuevo Lote</DialogTitle>
-                          </DialogHeader>
-                          <LoteForm onSubmit={handleCreateLote} />
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  )}
-                  
-                  <LotesList 
-                    lotes={lotes} 
-                    onSelectLote={setSelectedLoteId}
-                    selectedLoteId={selectedLoteId}
-                  />
+            <TabsContent value="dashboard">
+              {selectedLote ? (
+                <Dashboard 
+                  lote={selectedLote}
+                  ventas={ventas.filter(v => v.loteId === selectedLote.id)}
+                  cosechas={cosechas.filter(c => c.loteId === selectedLote.id)}
+                  userRole={currentUser.rol}
+                  onUpdateEstado={handleUpdateLoteEstado}
+                  onUpdateFechaPesca={handleUpdateFechaPesca}
+                />
+              ) : (
+                <div className="bg-white rounded-lg shadow p-8 text-center">
+                  <p className="text-gray-600">Selecciona un lote para ver su dashboard</p>
                 </div>
-              </TabsContent>
-            </>
+              )}
+            </TabsContent>
           )}
 
+          {/* LOTES */}
+          {currentUser.rol !== 'Vendedor' && (
+            <TabsContent value="lotes">
+              <div className="space-y-4">
+                {(currentUser.rol === 'Propietario' || currentUser.rol === 'Administrador') && (
+                  <div className="flex justify-end">
+                    <Dialog open={showLoteForm} onOpenChange={setShowLoteForm}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700">
+                          Crear Nuevo Lote
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Crear Nuevo Lote</DialogTitle>
+                        </DialogHeader>
+                        <LoteForm onSubmit={handleCreateLote} />
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                )}
+
+                <LotesList 
+                  lotes={lotes} 
+                  onSelectLote={setSelectedLoteId}
+                  selectedLoteId={selectedLoteId}
+                />
+              </div>
+            </TabsContent>
+          )}
+
+          {/* REGISTRAR COSECHA */}
           {currentUser.rol === 'Propietario' && (
             <TabsContent value="cosecha">
               <div className="max-w-2xl mx-auto">
                 <CosechaForm 
                   lotes={lotes.filter(l => l.estado === 'Listo para Pescar')}
                   onSubmit={handleRegistrarCosecha}
-                  pescadores={pescadores.filter(p => p.activo)}
+                  pescadores={[]} 
                   pescadorNombre={currentUser.nombre}
                 />
               </div>
             </TabsContent>
           )}
 
+          {/* REGISTRAR VENTA */}
           {(currentUser.rol === 'Vendedor' || currentUser.rol === 'Propietario' || currentUser.rol === 'Administrador') && (
             <TabsContent value="venta">
               <div className="max-w-2xl mx-auto">
                 <VentaForm 
                   lotes={lotes.filter(l => l.estado === 'En Venta' && (l.librasCosechadas - l.librasVendidas) > 0)}
                   onSubmit={handleRegistrarVenta}
-                  proveedores={proveedores.filter(p => p.activo)}
-                  vendedores={vendedores.filter(v => v.activo)}
+                  proveedores={[]} 
+                  vendedores={[]} 
                   vendedorNombre={currentUser.nombre}
-                  onCreateProveedor={handleCreateProveedor}
+                  onCreateProveedor={() => {}} 
                 />
               </div>
             </TabsContent>
           )}
 
+          {/* ADMINISTRACIÓN */}
           {(currentUser.rol === 'Propietario' || currentUser.rol === 'Administrador') && (
             <TabsContent value="administracion">
-              <AdministracionPanel
-                proveedores={proveedores}
-                pescadores={pescadores}
-                vendedores={vendedores}
-                onCreateProveedor={handleCreateProveedor}
-                onUpdateProveedor={handleUpdateProveedor}
-                onDeleteProveedor={handleDeleteProveedor}
-                onCreatePescador={handleCreatePescador}
-                onUpdatePescador={handleUpdatePescador}
-                onDeletePescador={handleDeletePescador}
-                onCreateVendedor={handleCreateVendedor}
-                onUpdateVendedor={handleUpdateVendedor}
-                onDeleteVendedor={handleDeleteVendedor}
-                userRole={currentUser.rol}
-              />
+              <AdministracionPanel userRole={currentUser.rol} />
             </TabsContent>
           )}
         </Tabs>
