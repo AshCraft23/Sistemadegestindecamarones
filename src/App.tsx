@@ -31,7 +31,7 @@ import { LoteForm } from "./components/LoteForm";
 import { CosechaForm } from "./components/CosechaForm";
 import { VentaForm } from "./components/VentaForm";
 import { LotesList } from "./components/LotesList";
-import AdministracionPanel from "./components/AdministracionPanel";
+import { AdministracionPanel } from "./components/AdministracionPanel";
 import { LoginForm } from "./components/LoginForm";
 
 // -------------------------------
