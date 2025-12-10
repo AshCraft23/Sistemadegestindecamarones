@@ -726,26 +726,25 @@ export default function App() {
 
           {currentUser.rol !== "Vendedor" && (
             <>
-              <TabsContent value="dashboard
-                {selectedLote ? (
-                  <Dashboard
-                    lote={selectedLote}
-                    ventas={ventas.filter((v) => v.loteId === selectedLote.id)}
-                    cosechas={cosechas.filter(
-                      (c) => c.loteId === selectedLote.id
-                    )}
-                    userRole={currentUser.rol}
-                    onUpdateEstado={handleUpdateLoteEstado}
-                    onUpdateFechaPesca={handleUpdateFechaPesca}
-                  />
-                ) : (
-                  <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-600">
-                      Selecciona un lote para ver su dashboard
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
+              <TabsContent value="dashboard">
+  {selectedLote ? (
+    <Dashboard
+      lote={selectedLote}
+      ventas={ventas.filter((v) => v.loteId === selectedLote.id)}
+      cosechas={cosechas.filter((c) => c.loteId === selectedLote.id)}
+      userRole={currentUser.rol}
+      onUpdateEstado={handleUpdateLoteEstado}
+      onUpdateFechaPesca={handleUpdateFechaPesca}
+    />
+  ) : (
+    <div className="bg-white rounded-lg shadow p-8 text-center">
+      <p className="text-gray-600">
+        Selecciona un lote para ver su dashboard
+      </p>
+    </div>
+  )}
+</TabsContent>
+
 
               <TabsContent value="lotes">
                 <div className="space-y-4">
@@ -770,7 +769,7 @@ export default function App() {
                       </Dialog>
                     </div>
                   )}
-
+                  
                   <LotesList
                     lotes={lotes}
                     onSelectLote={setSelectedLoteId}
@@ -780,7 +779,6 @@ export default function App() {
               </TabsContent>
             </>
           )}
-
           {currentUser.rol === "Propietario" && (
             <TabsContent value="cosecha">
               <div className="max-w-2xl mx-auto">
