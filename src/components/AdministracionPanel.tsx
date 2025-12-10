@@ -296,13 +296,13 @@ export function AdministracionPanel({
         {/* ============================
             USUARIOS
         ============================= */}
-        {userRole === "Administrador" && (
+                {userRole === 'Administrador' && (
           <TabsContent value="usuarios">
-            <Card>
+            <Card className="border-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
               <CardHeader>
-                <CardTitle className="text-cyan-900">Usuarios</CardTitle>
+                <CardTitle className="text-cyan-900">Panel de Usuarios</CardTitle>
+                <p className="text-sm text-gray-600">Gestiona los usuarios del sistema</p>
               </CardHeader>
-
               <CardContent>
                 <UsuariosPanel />
               </CardContent>
