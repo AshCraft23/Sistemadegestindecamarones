@@ -5,11 +5,10 @@
 
 El proposito de este software es que sirva de gestión y dashboard parr organizar inventario y ganancias de una granja de Camarones.
 
-Usos
-##Frontend
+#Frontend
 React + Vite
 
-##Backend
+#Backend
 PostgreSQL
 
   
