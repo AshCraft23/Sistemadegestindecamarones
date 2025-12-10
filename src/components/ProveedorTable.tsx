@@ -12,7 +12,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export interface Proveedor {
-  id: string; // UUID generado por Supabase
+  id: string;           // UUID real de Supabase
   nombre: string;
   contacto: string;
   telefono: string;
@@ -23,7 +23,7 @@ export interface Proveedor {
 interface ProveedorTableProps {
   proveedores: Proveedor[];
   onEdit: (proveedor: Proveedor) => void;
-  onRefresh: () => void;
+  onRefresh: () => void;   // Para recargar datos luego de eliminar
 }
 
 export function ProveedorTable({
@@ -31,14 +31,14 @@ export function ProveedorTable({
   onEdit,
   onRefresh,
 }: ProveedorTableProps) {
-  
+
   const handleDelete = async (id: string, nombre: string) => {
     const ok = confirm(`¿Está seguro de eliminar a ${nombre}?`);
     if (!ok) return;
 
-    // 🔥 Aquí se usa UUID verdadero, no PR-003
+    // ⚠️ TABLA CORRECTA: "contacts"
     const { error } = await supabase
-      .from('proveedores')
+      .from('contacts')
       .delete()
       .eq('id', id);
 
@@ -49,7 +49,7 @@ export function ProveedorTable({
     }
 
     alert('Proveedor eliminado correctamente.');
-    onRefresh(); // recarga lista
+    onRefresh(); // recargar lista en el front
   };
 
   if (proveedores.length === 0) {
@@ -74,6 +74,7 @@ export function ProveedorTable({
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {proveedores.map((p) => (
             <TableRow key={p.id}>
@@ -82,6 +83,7 @@ export function ProveedorTable({
               <TableCell>{p.contacto}</TableCell>
               <TableCell>{p.telefono}</TableCell>
               <TableCell>{p.email}</TableCell>
+
               <TableCell>
                 <Badge
                   className={

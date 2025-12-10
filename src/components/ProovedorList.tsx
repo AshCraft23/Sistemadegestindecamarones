@@ -1,74 +1,106 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { ProveedorForm } from './ProveedorForm';
-import { ProveedorTable, Proveedor } from './ProveedorTable';
-import { Card } from './ui/card'; // si no tienes Card, puedes quitarlo o usar un div
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { Proveedor } from "../App";
+
+import { ProveedorForm } from "./ProveedorForm";
+import { ProveedorTable } from "./ProveedorTable";
 
 export default function ProovedorList() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
-  const [editing, setEditing] = useState<Proveedor | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [editingProveedor, setEditingProveedor] = useState<Proveedor | null>(null);
 
-  const cargarProveedores = async () => {
-    setLoading(true);
-
+  // 🔥 Cargar datos desde Supabase
+  const fetchProveedores = async () => {
     const { data, error } = await supabase
-      .from('proveedores')
-      .select('*')
-      .order('nombre', { ascending: true });
+      .from("contacts")
+      .select("*");
 
     if (error) {
-      console.error('Error cargando proveedores:', error);
-      alert('Error al cargar proveedores: ' + error.message);
-      setLoading(false);
+      console.error("Error cargando proveedores:", error);
       return;
     }
 
-    // Mapear datos de Supabase → interfaz del front
-    const list: Proveedor[] =
-      data?.map((p: any) => ({
-        id: p.id,
-        nombre: p.nombre,
-        contacts: p.contacts ?? '',
-        telefono: p.telefono ?? '',
-        email: p.email ?? '',
-        activo: p.activo ?? true,
-      })) ?? [];
-
-    setProveedores(list);
-    setLoading(false);
+    setProveedores(data);
   };
 
   useEffect(() => {
-    cargarProveedores();
+    fetchProveedores();
   }, []);
 
-  const handleSubmit = () => {
-    setEditing(null);
-    cargarProveedores();
+  // 🔥 Crear proveedor
+  const handleCreate = async (nuevo: Omit<Proveedor, "id">) => {
+    const { error } = await supabase
+      .from("contacts")
+      .insert({
+        nombre: nuevo.nombre,
+        telefono: nuevo.telefono,
+        email: nuevo.email,
+        contacto: nuevo.contacto,
+        activo: nuevo.activo,
+      });
+
+    if (error) {
+      alert("Error creando proveedor: " + error.message);
+      return;
+    }
+
+    fetchProveedores();
+  };
+
+  // 🔥 Editar proveedor
+  const handleEdit = async (id: string, data: Omit<Proveedor, "id">) => {
+    const { error } = await supabase
+      .from("contacts")
+      .update({
+        nombre: data.nombre,
+        telefono: data.telefono,
+        email: data.email,
+        contacto: data.contacto,
+        activo: data.activo,
+      })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error actualizando proveedor: " + error.message);
+      return;
+    }
+
+    setEditingProveedor(null);
+    fetchProveedores();
+  };
+
+  // 🔥 Borrar proveedor
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from("contacts")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert("Error eliminando proveedor: " + error.message);
+      return;
+    }
+
+    fetchProveedores();
   };
 
   return (
     <div className="space-y-6">
-      <Card className="p-4">
-        <h2 className="text-lg font-semibold mb-4">
-          {editing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-        </h2>
-        <ProveedorForm initialData={editing || undefined} onSubmit={handleSubmit} />
-      </Card>
+      <h2 className="text-xl font-bold">Proveedores</h2>
 
-      <Card className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Listado de Proveedores</h2>
-        {loading ? (
-          <p className="text-gray-500">Cargando proveedores...</p>
-        ) : (
-          <ProveedorTable
-            proveedores={proveedores}
-            onEdit={(p) => setEditing(p)}
-            onRefresh={cargarProveedores}
-          />
-        )}
-      </Card>
+      <ProveedorForm
+        initialData={editingProveedor || undefined}
+        onSubmit={(data) => {
+          if (editingProveedor) handleEdit(editingProveedor.id, data);
+          else handleCreate(data);
+        }}
+      />
+
+      <ProveedorTable
+        proveedores={proveedores}
+        onEdit={(p) => setEditingProveedor(p)}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }
