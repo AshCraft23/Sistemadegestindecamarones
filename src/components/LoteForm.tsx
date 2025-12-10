@@ -32,7 +32,7 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
     costo_produccion: 0,
   });
 
-  // 🧮 Calcular fecha estimada de pesca = 90 días después
+  // Calcular fecha estimada de pesca = 90 días después
   useEffect(() => {
     const fecha = new Date(formData.fecha_inicio);
     const estimada = new Date(fecha);
@@ -51,20 +51,18 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      
       {/* Nombre */}
       <div className="space-y-2">
         <Label htmlFor="nombre">Nombre del Lote</Label>
         <Input
           id="nombre"
-          placeholder="Ej: Piscina Norte A"
           value={formData.nombre}
           onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
           required
         />
       </div>
 
-      {/* Fecha de inicio */}
+      {/* Fecha inicio */}
       <div className="space-y-2">
         <Label htmlFor="fecha_inicio">Fecha de Inicio</Label>
         <Input
@@ -78,26 +76,21 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         />
       </div>
 
-      {/* Fecha estimada de pesca */}
+      {/* Fecha estimada pesca */}
       <div className="space-y-2">
-        <Label htmlFor="fecha_estimada_pesca">
-          Fecha Estimada de Pesca (90 días)
-        </Label>
+        <Label htmlFor="fecha_estimada_pesca">Fecha Estimada de Pesca</Label>
         <Input
           id="fecha_estimada_pesca"
           type="date"
           value={formData.fecha_estimada_pesca}
           onChange={(e) =>
-            setFormData({
-              ...formData,
-              fecha_estimada_pesca: e.target.value,
-            })
+            setFormData({ ...formData, fecha_estimada_pesca: e.target.value })
           }
           required
         />
       </div>
 
-      {/* Tipo de camarón */}
+      {/* Tipo de camaron */}
       <div className="space-y-2">
         <Label>Tipo de Camarón</Label>
         <Select
@@ -138,15 +131,12 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         </Select>
       </div>
 
-      {/* Costo de producción */}
+      {/* Costo producción */}
       <div className="space-y-2">
         <Label htmlFor="costo_produccion">Costo de Producción</Label>
         <Input
           id="costo_produccion"
           type="number"
-          min="0"
-          step="0.01"
-          placeholder="0.00"
           value={formData.costo_produccion}
           onChange={(e) =>
             setFormData({
