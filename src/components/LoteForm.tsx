@@ -9,11 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-
 import { EstadoLote } from "../App";
 
 interface LoteFormProps {
-  onSubmit: (data: {
+  onSubmit: (loteData: {
     nombre: string;
     fecha_inicio: string;
     fecha_estimada_pesca: string;
@@ -24,7 +23,7 @@ interface LoteFormProps {
 }
 
 export function LoteForm({ onSubmit }: LoteFormProps) {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     nombre: "",
     fecha_inicio: new Date().toISOString().split("T")[0],
     fecha_estimada_pesca: "",
@@ -33,65 +32,79 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
     costo_produccion: 0,
   });
 
-  // Auto calcular +90 días
+  // 🧮 Calcular fecha estimada de pesca = 90 días después
   useEffect(() => {
-    const start = new Date(form.fecha_inicio);
-    const est = new Date(start);
-    est.setDate(start.getDate() + 90);
+    const fecha = new Date(formData.fecha_inicio);
+    const estimada = new Date(fecha);
+    estimada.setDate(fecha.getDate() + 90);
 
-    setForm((prev) => ({
-      ...prev,
-      fecha_estimada_pesca: est.toISOString().split("T")[0],
+    setFormData((f) => ({
+      ...f,
+      fecha_estimada_pesca: estimada.toISOString().split("T")[0],
     }));
-  }, [form.fecha_inicio]);
+  }, [formData.fecha_inicio]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form);
+    onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      
       {/* Nombre */}
       <div className="space-y-2">
-        <Label>Nombre del lote</Label>
+        <Label htmlFor="nombre">Nombre del Lote</Label>
         <Input
-          value={form.nombre}
-          onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+          id="nombre"
+          placeholder="Ej: Piscina Norte A"
+          value={formData.nombre}
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
           required
         />
       </div>
 
-      {/* Fecha inicio */}
+      {/* Fecha de inicio */}
       <div className="space-y-2">
-        <Label>Fecha de inicio</Label>
+        <Label htmlFor="fecha_inicio">Fecha de Inicio</Label>
         <Input
+          id="fecha_inicio"
           type="date"
-          value={form.fecha_inicio}
-          onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
-          required
-        />
-      </div>
-
-      {/* Fecha estimada pesca */}
-      <div className="space-y-2">
-        <Label>Fecha estimada de pesca</Label>
-        <Input
-          type="date"
-          value={form.fecha_estimada_pesca}
+          value={formData.fecha_inicio}
           onChange={(e) =>
-            setForm({ ...form, fecha_estimada_pesca: e.target.value })
+            setFormData({ ...formData, fecha_inicio: e.target.value })
           }
           required
         />
       </div>
 
-      {/* Tipo camarón */}
+      {/* Fecha estimada de pesca */}
       <div className="space-y-2">
-        <Label>Tipo de camarón</Label>
+        <Label htmlFor="fecha_estimada_pesca">
+          Fecha Estimada de Pesca (90 días)
+        </Label>
+        <Input
+          id="fecha_estimada_pesca"
+          type="date"
+          value={formData.fecha_estimada_pesca}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              fecha_estimada_pesca: e.target.value,
+            })
+          }
+          required
+        />
+      </div>
+
+      {/* Tipo de camarón */}
+      <div className="space-y-2">
+        <Label>Tipo de Camarón</Label>
         <Select
-          value={form.tipo_camaron}
-          onValueChange={(v) => setForm({ ...form, tipo_camaron: v })}
+          value={formData.tipo_camaron}
+          onValueChange={(value) =>
+            setFormData({ ...formData, tipo_camaron: value })
+          }
         >
           <SelectTrigger>
             <SelectValue />
@@ -107,10 +120,12 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
 
       {/* Estado */}
       <div className="space-y-2">
-        <Label>Estado inicial</Label>
+        <Label>Estado Inicial</Label>
         <Select
-          value={form.estado}
-          onValueChange={(v: EstadoLote) => setForm({ ...form, estado: v })}
+          value={formData.estado}
+          onValueChange={(value: EstadoLote) =>
+            setFormData({ ...formData, estado: value })
+          }
         >
           <SelectTrigger>
             <SelectValue />
@@ -123,17 +138,19 @@ export function LoteForm({ onSubmit }: LoteFormProps) {
         </Select>
       </div>
 
-      {/* Costo */}
+      {/* Costo de producción */}
       <div className="space-y-2">
-        <Label>Costo de producción</Label>
+        <Label htmlFor="costo_produccion">Costo de Producción</Label>
         <Input
+          id="costo_produccion"
           type="number"
-          step="0.01"
           min="0"
-          value={form.costo_produccion}
+          step="0.01"
+          placeholder="0.00"
+          value={formData.costo_produccion}
           onChange={(e) =>
-            setForm({
-              ...form,
+            setFormData({
+              ...formData,
               costo_produccion: parseFloat(e.target.value) || 0,
             })
           }

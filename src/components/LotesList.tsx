@@ -5,83 +5,82 @@ import { Lote, EstadoLote } from "../App";
 
 interface LotesListProps {
   lotes: Lote[];
-  onSelectLote: (id: string) => void;
+  onSelectLote: (loteId: string) => void;
   selectedLoteId: string | null;
 }
 
 const estadoColors: Record<EstadoLote, string> = {
-  Crianza: "bg-blue-100 text-blue-800",
-  "Listo para Pescar": "bg-green-100 text-green-800",
-  "En Venta": "bg-cyan-100 text-cyan-800",
-  Reposo: "bg-yellow-100 text-yellow-800",
-  Descarte: "bg-red-100 text-red-800",
+  Crianza: "bg-blue-100 text-blue-800 border-blue-200",
+  "Listo para Pescar": "bg-green-100 text-green-800 border-green-200",
+  "En Venta": "bg-cyan-100 text-cyan-800 border-cyan-200",
+  Reposo: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  Descarte: "bg-red-100 text-red-800 border-red-200",
 };
 
-export function LotesList({ lotes, onSelectLote, selectedLoteId }: LotesListProps) {
+export function LotesList({
+  lotes,
+  onSelectLote,
+  selectedLoteId,
+}: LotesListProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {lotes.map((l) => {
-        const isSelected = l.id === selectedLoteId;
+      {lotes.map((lote) => {
+        const isSelected = lote.id === selectedLoteId;
 
         return (
           <Card
-            key={l.id}
-            className={`cursor-pointer hover:shadow-lg transition border ${
+            key={lote.id}
+            className={`cursor-pointer transition-all hover:shadow-lg ${
               isSelected ? "ring-2 ring-cyan-500 border-cyan-500" : ""
             }`}
-            onClick={() => onSelectLote(l.id)}
+            onClick={() => onSelectLote(lote.id)}
           >
             <CardContent className="p-6">
-              <div className="flex justify-between mb-3">
+              {/* encabezado */}
+              <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-gray-900 font-medium">{l.nombre}</h3>
-                  <p className="text-sm text-gray-500">{l.id}</p>
+                  <h3 className="text-gray-900 mb-1">{lote.nombre}</h3>
+                  <p className="text-sm text-gray-500">ID: {lote.id}</p>
                 </div>
 
-                <Badge className={estadoColors[l.estado]}>{l.estado}</Badge>
+                <Badge className={estadoColors[lote.estado]}>
+                  {lote.estado}
+                </Badge>
               </div>
 
-              {/* Tipo camarón */}
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                <Fish className="size-4 text-cyan-600" />
-                {l.tipo_camaron}
-              </div>
-
-              {/* Fechas */}
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="size-4 text-cyan-600" />
-                Inicio: {new Date(l.fecha_inicio).toLocaleDateString("es-ES")}
-              </div>
-
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                <Calendar className="size-4 text-teal-600" />
-                Est. Pesca:{" "}
-                {new Date(l.fecha_estimada_pesca).toLocaleDateString("es-ES")}
-              </div>
-
-              <div className="border-t pt-3 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Cosechado:</span>
-                  <span>{l.libras_cosechadas.toFixed(2)} lb</span>
+              {/* detalles */}
+              <div className="space-y-3">
+                {/* Tipo de camarón */}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Fish className="size-4 text-cyan-600" />
+                  <span>{lote.tipo_camaron}</span>
                 </div>
 
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Vendido:</span>
-                  <span>{l.libras_vendidas.toFixed(2)} lb</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Inventario:</span>
-                  <span className="text-cyan-700 font-medium">
-                    {l.libras_en_inventario.toFixed(2)} lb
+                {/* Fechas */}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="size-4 text-cyan-600" />
+                  <span>
+                    Inicio:{" "}
+                    {new Date(lote.fecha_inicio).toLocaleDateString("es-ES")}
                   </span>
                 </div>
 
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-gray-600">Ingresos:</span>
-                  <span className="text-green-700 font-medium">
-                    ${l.ingresos_totales.toLocaleString("es-ES")}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="size-4 text-teal-600" />
+                  <span>
+                    Est. Pesca:{" "}
+                    {new Date(
+                      lote.fecha_estimada_pesca
+                    ).toLocaleDateString("es-ES")}
                   </span>
+                </div>
+
+                {/* Datos futuros (no existen en la tabla actual) */}
+                <div className="pt-3 border-t border-gray-200 space-y-2">
+                  <p className="text-xs text-gray-500 italic">
+                    Datos de cosechas y ventas aparecerán cuando conectemos la vista
+                    <strong> lotes_dashboard_view</strong>.
+                  </p>
                 </div>
               </div>
             </CardContent>
