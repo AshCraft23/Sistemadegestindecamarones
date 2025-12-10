@@ -119,6 +119,10 @@ export interface Vendedor {
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const handleCreateUsuario = (data: Omit<Usuario, "id">) => { ... }
+  const handleUpdateUsuario = (id: string, data: Omit<Usuario, "id">) => { ... }
+  const handleDeleteUsuario = (id: string) => { ... }
 
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [cosechas, setCosechas] = useState<Cosecha[]>([]);
@@ -588,6 +592,13 @@ const fetchVentas = async () => {
   // ====================
   if (!currentUser) {
     return (
+      <UsuariosPanel
+  usuarios={usuarios}
+  onCreateUsuario={handleCreateUsuario}
+  onUpdateUsuario={handleUpdateUsuario}
+  onDeleteUsuario={handleDeleteUsuario}
+/>
+
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
           <div className="flex items-center justify-center mb-6">
