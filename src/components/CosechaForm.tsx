@@ -1,30 +1,3 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { AlertCircle } from "lucide-react";
-import { Lote, Pescador } from "../App";
-
-interface CosechaFormProps {
-  lotes: Lote[];
-  pescadores: Pescador[];
-  pescadorNombre: string;
-  onSubmit: (data: {
-    loteId: string;
-    fecha: string;
-    libras: number;
-    pescador: string;
-  }) => void;
-}
-
 export function CosechaForm({
   lotes,
   pescadores,
@@ -35,7 +8,7 @@ export function CosechaForm({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
-    pescador: pescadorNombre,
+    pescadorId: "",        // ✔️ Guardaremos el ID real
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,13 +24,18 @@ export function CosechaForm({
       return;
     }
 
+    if (!formData.pescadorId) {
+      alert("Debes seleccionar un pescador.");
+      return;
+    }
+
     onSubmit(formData);
 
     setFormData({
       loteId: "",
       fecha: new Date().toISOString().split("T")[0],
       libras: 0,
-      pescador: pescadorNombre,
+      pescadorId: "",
     });
   };
 
@@ -85,14 +63,13 @@ export function CosechaForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+
           {/* LOTE */}
-          <div className="space-y-2">
+          <div>
             <Label>Lote</Label>
             <Select
               value={formData.loteId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, loteId: value })
-              }
+              onValueChange={(v) => setFormData({ ...formData, loteId: v })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar lote" />
@@ -108,7 +85,7 @@ export function CosechaForm({
           </div>
 
           {/* FECHA */}
-          <div className="space-y-2">
+          <div>
             <Label>Fecha</Label>
             <Input
               type="date"
@@ -120,13 +97,13 @@ export function CosechaForm({
           </div>
 
           {/* LIBRAS */}
-          <div className="space-y-2">
+          <div>
             <Label>Libras cosechadas</Label>
             <Input
               type="number"
-              min="0.01"
               step="0.01"
-              value={formData.libras || ""}
+              min="0.01"
+              value={formData.libras}
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -137,20 +114,20 @@ export function CosechaForm({
           </div>
 
           {/* PESCADOR */}
-          <div className="space-y-2">
+          <div>
             <Label>Pescador</Label>
             <Select
-              value={formData.pescador}
-              onValueChange={(value) =>
-                setFormData({ ...formData, pescador: value })
+              value={formData.pescadorId}
+              onValueChange={(v) =>
+                setFormData({ ...formData, pescadorId: v })
               }
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Seleccionar pescador" />
               </SelectTrigger>
               <SelectContent>
                 {pescadores.map((p) => (
-                  <SelectItem key={p.id} value={p.nombre}>
+                  <SelectItem key={p.id} value={p.id}>
                     {p.nombre} — {p.especialidad}
                   </SelectItem>
                 ))}
@@ -158,7 +135,7 @@ export function CosechaForm({
             </Select>
           </div>
 
-          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white hover:from-cyan-700 hover:to-teal-700">
+          <Button className="w-full bg-gradient-to-r from-cyan-600 to-teal-600 text-white">
             Registrar Cosecha
           </Button>
         </form>
