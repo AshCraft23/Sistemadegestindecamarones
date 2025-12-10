@@ -11,7 +11,8 @@ import {
 } from "./ui/dialog";
 import { Plus } from "lucide-react";
 
-import { Proveedor, Pescador, Vendedor, UserRole } from "../App";
+// Importa todas las interfaces necesarias, incluyendo Usuario
+import { Proveedor, Pescador, Vendedor, UserRole, Usuario } from "../App";
 
 import { ProveedorForm } from "./ProveedorForm";
 import { PescadorForm } from "./PescadorForm";
@@ -27,7 +28,16 @@ interface AdministracionPanelProps {
   proveedores: Proveedor[];
   pescadores: Pescador[];
   vendedores: Vendedor[];
-
+  
+  // ============================================
+  // 1. PROPS DE USUARIOS AGREGADAS
+  // ============================================
+  usuarios: Usuario[]; 
+  onCreateUsuario: (data: Omit<Usuario, "id">) => void;
+  onUpdateUsuario: (id: string, data: Omit<Usuario, "id">) => void;
+  onDeleteUsuario: (id: string) => void;
+  // ============================================
+  
   onCreateProveedor: (data: Omit<Proveedor, "id">) => void;
   onUpdateProveedor: (id: string, data: Omit<Proveedor, "id">) => void;
   onDeleteProveedor: (id: string) => void;
@@ -47,6 +57,16 @@ export function AdministracionPanel({
   proveedores,
   pescadores,
   vendedores,
+  
+  // ============================================
+  // 2. DESESTRUCTURANDO PROPS DE USUARIOS
+  // ============================================
+  usuarios,
+  onCreateUsuario,
+  onUpdateUsuario,
+  onDeleteUsuario,
+  // ============================================
+
   onCreateProveedor,
   onUpdateProveedor,
   onDeleteProveedor,
@@ -294,19 +314,20 @@ export function AdministracionPanel({
         </TabsContent>
 
         {/* ============================
-            USUARIOS
+            USUARIOS (SOLO ADMIN)
         ============================= */}
-        {userRole === "Administrador" && (
+        {userRole === 'Administrador' && (
           <TabsContent value="usuarios">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-cyan-900">Usuarios</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <UsuariosPanel />
-              </CardContent>
-            </Card>
+            {/* Se reemplazó el Card extra por el UsuariosPanel para evitar anidamiento excesivo */}
+            <UsuariosPanel 
+              // ============================================
+              // 3. PASANDO LAS PROPS AL COMPONENTE HIJO
+              // ============================================
+              usuarios={usuarios}
+              onCreateUsuario={onCreateUsuario}
+              onUpdateUsuario={onUpdateUsuario}
+              onDeleteUsuario={onDeleteUsuario}
+            />
           </TabsContent>
         )}
       </Tabs>

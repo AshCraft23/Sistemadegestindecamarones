@@ -57,8 +57,12 @@ export interface Usuario {
   activo: boolean;     // mapea a "active"
 }
 
+<<<<<<< HEAD
 // NOTA: este tipo mezcla lo que viene de la vista (snake_case)
 // y alias en camelCase / sin guión bajo para que otros componentes sigan funcionando.
+=======
+
+>>>>>>> e3c1dffc798b6ac7b802da3fb906b080be815bdc
 export interface Lote {
   id: string;
   nombre: string;
@@ -73,18 +77,7 @@ export interface Lote {
   libras_vendidas: number;
   ingresos_totales: number;
 
-  // Alias antiguos sin guión bajo (LotesList / filtros)
-  librascosechadas: number;
-  librasvendidas: number;
-  ingresostotales: number;
-
-  // Alias camelCase usados en Dashboard
-  fechaInicio: string;
-  fechaEstimadaPesca: string;
-  tipoCamaron: string;
-  librasCosechadas: number;
-  librasVendidas: number;
-  ingresosTotales: number;
+  
 }
 
 export interface Cosecha {
@@ -132,6 +125,10 @@ export interface Vendedor {
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<Usuario | null>(null);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const handleCreateUsuario = (data: Omit<Usuario, "id">) => { ... }
+  const handleUpdateUsuario = (id: string, data: Omit<Usuario, "id">) => { ... }
+  const handleDeleteUsuario = (id: string) => { ... }
 
   const [lotes, setLotes] = useState<Lote[]>([]);
   const [cosechas, setCosechas] = useState<Cosecha[]>([]);
@@ -160,41 +157,18 @@ export default function App() {
       return;
     }
 
-    const mapped: Lote[] =
-      data?.map((row: any) => {
-        const librasC = Number(row.libras_cosechadas) || 0;
-        const librasV = Number(row.libras_vendidas) || 0;
-        const ingresos = Number(row.ingresos_totales) || 0;
-        const costo = Number(row.costo_produccion) || 0;
-
-        return {
-          id: row.id,
-          nombre: row.nombre,
-          fecha_inicio: row.fecha_inicio,
-          fecha_estimada_pesca: row.fecha_estimada_pesca,
-          tipo_camaron: row.tipo_camaron,
-          estado: row.estado as EstadoLote,
-          costo_produccion: costo,
-
-          // reales de la vista
-          libras_cosechadas: librasC,
-          libras_vendidas: librasV,
-          ingresos_totales: ingresos,
-
-          // alias sin guión bajo
-          librascosechadas: librasC,
-          librasvendidas: librasV,
-          ingresostotales: ingresos,
-
-          // alias camelCase
-          fechaInicio: row.fecha_inicio,
-          fechaEstimadaPesca: row.fecha_estimada_pesca,
-          tipoCamaron: row.tipo_camaron,
-          librasCosechadas: librasC,
-          librasVendidas: librasV,
-          ingresosTotales: ingresos,
-        };
-      }) ?? [];
+    const mapped: Lote[] = data?.map((row: any) => ({
+      id: row.id,
+      nombre: row.nombre,
+      fecha_inicio: row.fecha_inicio,
+      fecha_estimada_pesca: row.fecha_estimada_pesca,
+      tipo_camaron: row.tipo_camaron,
+      estado: row.estado,
+      costo_produccion: Number(row.costo_produccion) || 0,
+      libras_cosechadas: Number(row.libras_cosechadas) || 0,
+      libras_vendidas: Number(row.libras_vendidas) || 0,
+      ingresos_totales: Number(row.ingresos_totales) || 0,
+    })) ?? [];
 
     setLotes(mapped);
 
@@ -319,6 +293,7 @@ export default function App() {
   };
 
   // ====================
+<<<<<<< HEAD
   // FETCH: USUARIOS (tabla users)
   // ====================
   const fetchUsuarios = async () => {
@@ -344,6 +319,31 @@ export default function App() {
       }))
     );
   };
+=======
+  // FETCH COSECHAS
+  // ====================
+  const fetchCosechas = async () => {
+  const { data, error } = await supabase
+    .from("cosechas")
+    .select("id, lote_id, fecha, libras, pescador_nombre")
+    .order("fecha", { ascending: false });
+
+  if (error) {
+    console.error("Error cargando cosechas:", error);
+    return;
+  }
+
+  const mapped: Cosecha[] = (data ?? []).map((row: any) => ({
+    id: row.id,
+    loteId: row.lote_id,
+    fecha: row.fecha,
+    libras: Number(row.libras) || 0,
+    pescador: row.pescador_nombre ?? "",
+  }));
+
+  setCosechas(mapped);
+};
+>>>>>>> e3c1dffc798b6ac7b802da3fb906b080be815bdc
 
   // ====================
   // FETCH ALL
@@ -355,8 +355,13 @@ export default function App() {
       fetchProveedores(),
       fetchPescadores(),
       fetchVendedores(),
+<<<<<<< HEAD
       fetchUsuarios(),
+=======
+      fetchCosechas(), // ← NECESARIO
+>>>>>>> e3c1dffc798b6ac7b802da3fb906b080be815bdc
     ]);
+
   };
 
   // ====================
@@ -391,7 +396,8 @@ export default function App() {
                 fetchLotes(); // para refrescar totales de la vista
                 break;
               case "cosechas":
-                fetchLotes(); // la vista usa cosechas
+                  fetchCosechas();
+                fetchLotes();
                 break;
               case "proveedores":
                 fetchProveedores();
@@ -683,6 +689,13 @@ export default function App() {
   // ====================
   if (!currentUser) {
     return (
+      <UsuariosPanel
+  usuarios={usuarios}
+  onCreateUsuario={handleCreateUsuario}
+  onUpdateUsuario={handleUpdateUsuario}
+  onDeleteUsuario={handleDeleteUsuario}
+/>
+
       <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
           <div className="flex items-center justify-center mb-6">
@@ -920,7 +933,7 @@ export default function App() {
                   lotes={lotes.filter(
                     (l) =>
                       l.estado === "En Venta" &&
-                      l.librascosechadas - l.librasvendidas > 0
+                      l.libras_cosechadas - l.libras_vendidas > 0
                   )}
                   onSubmit={handleRegistrarVenta}
                   proveedores={proveedores.filter((p) => p.activo)}

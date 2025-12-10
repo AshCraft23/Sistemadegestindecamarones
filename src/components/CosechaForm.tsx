@@ -16,26 +16,26 @@ import { Lote, Pescador } from "../App";
 interface CosechaFormProps {
   lotes: Lote[];
   pescadores: Pescador[];
-  pescadorNombre: string;
+  pescadorId: string;
   onSubmit: (data: {
     loteId: string;
     fecha: string;
     libras: number;
-    pescador: string;
+    pescador_id: string;
   }) => void;
 }
 
 export function CosechaForm({
   lotes,
   pescadores,
-  pescadorNombre,
+  pescadorId,
   onSubmit,
 }: CosechaFormProps) {
   const [formData, setFormData] = useState({
     loteId: "",
     fecha: new Date().toISOString().split("T")[0],
     libras: 0,
-    pescador: pescadorNombre,
+    pescador_id: pescadorId,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,13 +51,16 @@ export function CosechaForm({
       return;
     }
 
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      libras: Number(formData.libras),
+    });
 
     setFormData({
       loteId: "",
       fecha: new Date().toISOString().split("T")[0],
       libras: 0,
-      pescador: pescadorNombre,
+      pescador_id: pescadorId,
     });
   };
 
@@ -68,8 +71,8 @@ export function CosechaForm({
           <div className="flex items-center gap-3 text-yellow-800">
             <AlertCircle className="size-5" />
             <p>
-              No hay lotes disponibles para cosecha.  
-              Solo los lotes con estado **"Listo para Pescar"** pueden cosecharse.
+              No hay lotes disponibles para cosecha. 
+              Solo los lotes con estado <b>"Listo para Pescar"</b> pueden cosecharse.
             </p>
           </div>
         </CardContent>
@@ -85,6 +88,7 @@ export function CosechaForm({
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+
           {/* LOTE */}
           <div className="space-y-2">
             <Label>Lote</Label>
@@ -97,6 +101,7 @@ export function CosechaForm({
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar lote" />
               </SelectTrigger>
+
               <SelectContent>
                 {lotes.map((lote) => (
                   <SelectItem key={lote.id} value={lote.id}>
@@ -126,7 +131,7 @@ export function CosechaForm({
               type="number"
               min="0.01"
               step="0.01"
-              value={formData.libras || ""}
+              value={formData.libras}
               onChange={(e) =>
                 setFormData({
                   ...formData,
@@ -140,17 +145,18 @@ export function CosechaForm({
           <div className="space-y-2">
             <Label>Pescador</Label>
             <Select
-              value={formData.pescador}
+              value={formData.pescador_id}
               onValueChange={(value) =>
-                setFormData({ ...formData, pescador: value })
+                setFormData({ ...formData, pescador_id: value })
               }
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Seleccionar pescador" />
               </SelectTrigger>
+
               <SelectContent>
                 {pescadores.map((p) => (
-                  <SelectItem key={p.id} value={p.nombre}>
+                  <SelectItem key={p.id} value={p.id}>
                     {p.nombre} — {p.especialidad}
                   </SelectItem>
                 ))}

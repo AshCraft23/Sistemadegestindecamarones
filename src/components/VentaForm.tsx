@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Card, CardContent } from "./ui/card";
 import {
   Select,
   SelectTrigger,
@@ -9,6 +10,9 @@ import {
   SelectValue,
   SelectItem,
 } from "./ui/select";
+
+import { AlertCircle } from "lucide-react";
+
 import { Lote, Proveedor, Vendedor } from "../App";
 
 interface Props {
@@ -24,7 +28,6 @@ interface Props {
     proveedor: string;
     vendedor: string;
   }) => void;
-  onCreateProveedor: (data: Omit<Proveedor, "id">) => void;
 }
 
 export function VentaForm({
@@ -67,8 +70,21 @@ export function VentaForm({
     onSubmit(form);
   };
 
+  // 🟡 MOSTRAR MENSAJE SI NO HAY LOTES DISPONIBLES
+  if (lotes.length === 0) {
+    return (
+      <Card className="border-yellow-300 bg-yellow-50">
+        <CardContent className="p-4 flex items-center gap-3 text-yellow-800">
+          <AlertCircle className="size-5" />
+          <p>No hay lotes disponibles para venta.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <form onSubmit={handle} className="space-y-4 bg-white p-6 rounded-lg shadow">
+
       {/* LOTE */}
       <div>
         <Label>Lote</Label>
@@ -133,6 +149,7 @@ export function VentaForm({
             }
           />
         </div>
+
         <div>
           <Label>Precio por libra ($)</Label>
           <Input
