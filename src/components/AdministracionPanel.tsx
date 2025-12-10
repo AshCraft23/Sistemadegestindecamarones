@@ -59,9 +59,7 @@ export function AdministracionPanel({
   const [showPescadorForm, setShowPescadorForm] = useState(false);
   const [showVendedorForm, setShowVendedorForm] = useState(false);
 
-  const [editingProveedor, setEditingProveedor] = useState<Proveedor | null>(
-    null
-  );
+  const [editingProveedor, setEditingProveedor] = useState<Proveedor | null>(null);
   const [editingPescador, setEditingPescador] = useState<Pescador | null>(null);
   const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null);
 
@@ -93,10 +91,7 @@ export function AdministracionPanel({
               <div className="flex items-center justify-between">
                 <CardTitle>Gestión de Proveedores</CardTitle>
 
-                <Dialog
-                  open={showProveedorForm}
-                  onOpenChange={setShowProveedorForm}
-                >
+                <Dialog open={showProveedorForm} onOpenChange={setShowProveedorForm}>
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-to-r from-cyan-600 to-teal-600">
                       <Plus className="mr-2 size-4" />
@@ -130,10 +125,7 @@ export function AdministracionPanel({
           </Card>
 
           {/* Editar proveedor */}
-          <Dialog
-            open={!!editingProveedor}
-            onOpenChange={() => setEditingProveedor(null)}
-          >
+          <Dialog open={!!editingProveedor} onOpenChange={() => setEditingProveedor(null)}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Editar Proveedor</DialogTitle>
@@ -159,10 +151,7 @@ export function AdministracionPanel({
               <div className="flex items-center justify-between">
                 <CardTitle>Pescadores</CardTitle>
 
-                <Dialog
-                  open={showPescadorForm}
-                  onOpenChange={setShowPescadorForm}
-                >
+                <Dialog open={showPescadorForm} onOpenChange={setShowPescadorForm}>
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-to-r from-teal-600 to-green-600">
                       <Plus className="mr-2 size-4" />
@@ -195,10 +184,7 @@ export function AdministracionPanel({
             </CardContent>
           </Card>
 
-          <Dialog
-            open={!!editingPescador}
-            onOpenChange={() => setEditingPescador(null)}
-          >
+          <Dialog open={!!editingPescador} onOpenChange={() => setEditingPescador(null)}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Editar Pescador</DialogTitle>
@@ -224,10 +210,7 @@ export function AdministracionPanel({
               <div className="flex items-center justify-between">
                 <CardTitle>Vendedores</CardTitle>
 
-                <Dialog
-                  open={showVendedorForm}
-                  onOpenChange={setShowVendedorForm}
-                >
+                <Dialog open={showVendedorForm} onOpenChange={setShowVendedorForm}>
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
                       <Plus className="mr-2 size-4" />
@@ -260,10 +243,7 @@ export function AdministracionPanel({
             </CardContent>
           </Card>
 
-          <Dialog
-            open={!!editingVendedor}
-            onOpenChange={() => setEditingVendedor(null)}
-          >
+          <Dialog open={!!editingVendedor} onOpenChange={() => setEditingVendedor(null)}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Editar Vendedor</DialogTitle>
@@ -301,5 +281,4 @@ export function AdministracionPanel({
   );
 }
 
-// EXPORT DEFAULT AÑADIDO (OPCIÓN 1)
 export default AdministracionPanel;
